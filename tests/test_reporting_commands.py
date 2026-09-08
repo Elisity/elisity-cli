@@ -152,11 +152,34 @@ class TestZeroTrustRequestShape:
         assert result.exit_code == 0, result.output
         assert "filters" not in client.posts[0]["body"]["variables"]
 
-    def test_default_snapshot_is_sent(self, runner, fake):
+    def test_no_datetime_argument_is_sent(self, runner, fake):
+        """`zeroTrustMetrics` takes no `dateTime` argument on a live tenant.
+
+        Sending one is not ignored — the server rejects the whole query with
+        `Unknown field argument 'dateTime'`. The argument is absent from the
+        field's argument set entirely (live introspection: {site, filters}),
+        and on the staged 26.7 capture it is a nullable LIST, so omitting it is
+        valid there too. This pins the one shape both tenants accept.
+        """
         client = fake(graphql_response=_zt_response([]))
         runner.invoke(cli, ["reporting", "get-zero-trust-metrics"])
-        snapshots = client.posts[0]["body"]["variables"]["snapshotDateTimes"]
-        assert len(snapshots) == 1 and snapshots[0].endswith("Z")
+        body = client.posts[0]["body"]
+        assert "dateTime:" not in body["query"]
+        assert "$snapshotDateTimes" not in body["query"]
+        assert "snapshotDateTimes" not in body["variables"]
+
+    def test_deprecated_snapshot_flag_warns_on_stderr_only(self, runner, fake):
+        """The flag survives for compatibility but must not corrupt stdout.
+
+        An agent piping stdout to jq would choke on a warning mixed into JSON.
+        """
+        fake(graphql_response=_zt_response([]))
+        result = runner.invoke(
+            cli,
+            ["reporting", "get-zero-trust-metrics", "--snapshot", "2026-09-08T18:00:00.000Z"],
+        )
+        assert result.exit_code == 0, result.output
+        assert json.loads(result.stdout) == []
 
     def test_rows_are_rendered(self, runner, fake):
         fake(graphql_response=_zt_response([_zt_row(siteName="CORK")]))
@@ -239,24 +262,39 @@ class TestListSnapshots:
     probe errored and the command returned an empty list rather than failing.
     """
 
-    def test_returns_snapshots_that_have_rows(self, runner, fake):
-        fake(graphql_response=_zt_response([_zt_row(), _zt_row()]))
+    def test_reports_the_one_addressable_snapshot(self, runner, fake):
+        """Only the current snapshot is addressable, so exactly one row.
+
+        Previously this walked back `--hours` hours. With no `dateTime`
+        argument every probe returns identical rows, so walking back N hours
+        would report the same snapshot N times and read as N distinct
+        snapshots — worse than useless.
+        """
+        client = fake(graphql_response=_zt_response([_zt_row(), _zt_row()]))
         result = runner.invoke(cli, ["reporting", "list-snapshots", "--hours", "2"])
         assert result.exit_code == 0, result.output
-        snapshots = json.loads(result.output)
-        assert len(snapshots) == 2
+        snapshots = json.loads(result.stdout)
+        assert len(snapshots) == 1
         assert snapshots[0]["rows"] == 2
+        assert len(client.posts) == 1, "must ask once, not once per hour"
 
     def test_uses_the_filters_shaped_query(self, runner, fake):
         client = fake(graphql_response=_zt_response([]))
         runner.invoke(cli, ["reporting", "list-snapshots", "--hours", "1"])
         assert "filters: $filters" in client.posts[0]["body"]["query"]
 
-    def test_errors_are_skipped_not_raised(self, runner, fake):
-        fake(graphql_response={"errors": [{"message": "no data for snapshot"}]})
-        result = runner.invoke(cli, ["reporting", "list-snapshots", "--hours", "2"])
-        assert result.exit_code == 0
-        assert json.loads(result.output) == []
+    def test_errors_now_fail_loudly(self, runner, fake):
+        """The per-probe error swallow is gone, and that is the point.
+
+        Swallowing errors is exactly why the 26.7 breakage was invisible here:
+        every probe errored and the command rendered `[]`, so a dead query read
+        as an empty tenant. With one request there is nothing to skip, so a
+        validation error surfaces instead of being hidden.
+        """
+        fake(graphql_response={"errors": [{"message": "Unknown field argument"}]})
+        result = runner.invoke(cli, ["reporting", "list-snapshots"])
+        assert result.exit_code != 0
+        assert "Unknown field argument" in result.output
 
 
 class TestRemovedCommands:

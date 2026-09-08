@@ -53,15 +53,26 @@ GRAPHQL_PATH = "/api/reporting/v1/data"
 # because flattening would assert a 1:1 equivalence with the old tenant-level
 # averages that nobody has established. See README "What changed in CCC 26.7".
 #
+# `zeroTrustMetrics` takes no `dateTime` argument on a live tenant: it is absent
+# from the field's argument set and the server rejects it outright --
+#
+#   Validation error (UnknownArgument@[policyMetrics/zeroTrustMetrics]):
+#       Unknown field argument 'dateTime'
+#
+# On the staged 26.7 capture the argument DOES exist, but its type is a plain
+# LIST (nullable), so it is optional there. Omitting it is therefore valid
+# against both: the only shape that satisfies every tenant we can reach.
+# Verified live 2026-09-08 against ot.elisity.io (30 rows) and by introspecting
+# `PolicyMetrics.zeroTrustMetrics`, whose args are exactly {site, filters}.
+#
 # The other four `policyDeploymentMetrics` fields are deliberately NOT selected:
 # the live introspection handoff carried field NAMES only, not type kinds, so we
 # cannot tell a scalar from an object here, and selecting an object without a
 # sub-selection fails validation for the whole query. `devicePolicyCounts` /
 # `workloadPolicyCounts` read as aggregates and are the likeliest objects.
-_ZERO_TRUST_QUERY = """query GetRiskAttributionScores($snapshotDateTimes: [DateTime!]!, $site: [Site!], $includeMac: Boolean!, $includeL4Detail: Boolean = false, $filters: ZeroTrustFilters) {
+_ZERO_TRUST_QUERY = """query GetRiskAttributionScores($site: [Site!], $includeMac: Boolean!, $includeL4Detail: Boolean = false, $filters: ZeroTrustFilters) {
   policyMetrics {
     zeroTrustMetrics(
-      dateTime: $snapshotDateTimes
       site: $site
       filters: $filters
     ) {
@@ -235,8 +246,8 @@ def _lookup_sites(ctx, site_names: List[str]) -> List[dict]:
     "snapshots",
     multiple=True,
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC, e.g. 2026-05-22T11:00:00.000Z). "
-    "Repeatable. Default: previous full hour.",
+    help="DEPRECATED and ignored: zeroTrustMetrics takes no dateTime argument; "
+    "the endpoint serves the current snapshot only.",
 )
 @click.option(
     "--site",
@@ -334,8 +345,13 @@ def cmd_zero_trust(
         (map(.deviceCount) | add)
       '
     """
+    if snapshots:
+        click.echo(
+            "warning: --snapshot is ignored — zeroTrustMetrics takes no dateTime "
+            "argument; the endpoint serves the current snapshot only.",
+            err=True,
+        )
     variables = {
-        "snapshotDateTimes": list(snapshots) if snapshots else [_default_snapshot()],
         # A MAC filter with no MAC in the rows is useless output — imply the flag.
         "includeMac": include_mac or bool(mac_addresses),
         "includeL4Detail": include_l4_detail,
@@ -1063,44 +1079,43 @@ def cmd_top_ips(ctx, kind, top, from_time, to_time, step_hours, sites):
 @click.option(
     "--hours",
     type=int,
-    default=72,
-    help="How many hours back to probe (default 72).",
+    default=None,
+    help="DEPRECATED and ignored: only the current snapshot is addressable.",
 )
 @pass_context
 def cmd_list_snapshots(ctx, hours):
     """Discover which top-of-hour snapshots have data on this tenant.
 
     /api/reporting/v1/data serves point-in-time snapshots. Not every hour has
-    data — generation cadence varies by tenant. This walks back <hours> hours
-    and returns the (snapshot, row count) pairs that have data.
+    data. `zeroTrustMetrics` takes no `dateTime` argument on a live tenant, so
+    only the current snapshot is addressable: this reports that snapshot's
+    server-side dateTime and its row count. `--hours` is accepted but ignored.
 
     Example:
       elisity reporting list-snapshots
-      elisity reporting list-snapshots --hours 168     # last week
     """
-    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    # Without a `dateTime` argument every probe returns the same rows, so
+    # walking back N hours would report the current snapshot N times. Ask once
+    # and report the snapshot the endpoint actually serves.
+    if hours is not None:
+        click.echo(
+            "warning: --hours is ignored — zeroTrustMetrics takes no dateTime "
+            "argument, so only the current snapshot is addressable.",
+            err=True,
+        )
+    result = _post_graphql(
+        ctx,
+        "GetRiskAttributionScores",
+        {"includeMac": False, "includeL4Detail": False},
+        _ZERO_TRUST_QUERY,
+    )
+    _check_errors(result)
+    rows = (
+        result.get("data", {}).get("policyMetrics", {}).get("zeroTrustMetrics") or []
+    )
     available = []
-    for h in range(hours):
-        snap = (now - timedelta(hours=h)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-        result = _post_graphql(
-            ctx,
-            "GetRiskAttributionScores",
-            {
-                "snapshotDateTimes": [snap],
-                "includeMac": False,
-                "includeL4Detail": False,
-            },
-            _ZERO_TRUST_QUERY,
-        )
-        # don't raise on per-snapshot errors — just skip the row
-        if isinstance(result, dict) and result.get("errors"):
-            continue
-        rows = (
-            result.get("data", {}).get("policyMetrics", {}).get("zeroTrustMetrics")
-            or []
-        )
-        if rows:
-            available.append({"snapshot": snap, "rows": len(rows)})
+    if rows:
+        available.append({"snapshot": rows[0].get("dateTime"), "rows": len(rows)})
     render(available, ctx.format, ctx.query)
 
 
