@@ -345,7 +345,7 @@ def _classify_pg(active: int, simulation: int, external: int):
     "--snapshot",
     "snapshot",
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC). Default: previous full hour. "
+    help="ISO-8601 snapshot time (top-of-hour UTC). Default: current hour. "
     "Use `elisity reporting list-snapshots` to find a populated snapshot.",
 )
 @click.option(
@@ -531,7 +531,7 @@ _SITE_KPIS_QUERY = """query SiteKPIs($dt: DateTime!, $site: [Site!]) {
     "snapshots",
     multiple=True,
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC). Repeatable. Default: previous full hour.",
+    help="ISO-8601 snapshot time (top-of-hour UTC). Repeatable. Default: current hour.",
 )
 @click.option(
     "--site",
@@ -574,7 +574,7 @@ def cmd_aggregate_score(ctx, snapshots, sites):
     "snapshots",
     multiple=True,
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC). Repeatable. Default: previous full hour.",
+    help="ISO-8601 snapshot time (top-of-hour UTC). Repeatable. Default: current hour.",
 )
 @click.option(
     "--site",
@@ -621,7 +621,7 @@ def cmd_policy_set_score(ctx, policy_set_id, snapshots, sites):
     "snapshots",
     multiple=True,
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC). Repeatable. Default: previous full hour.",
+    help="ISO-8601 snapshot time (top-of-hour UTC). Repeatable. Default: current hour.",
 )
 @click.option(
     "--online",
@@ -677,7 +677,7 @@ def cmd_device_count(ctx, snapshots, online, sites):
     "--snapshot",
     "snapshot",
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC). Default: previous full hour.",
+    help="ISO-8601 snapshot time (top-of-hour UTC). Default: current hour.",
 )
 @click.option(
     "--site",
@@ -868,7 +868,7 @@ def _default_window(hours_back: int = 24, step_hours: int = 1) -> dict:
 
 @group.command("get-policy-count")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--monitor-mode",
               type=click.Choice(["MONITOR_ONLY", "MONITOR_AND_ENFORCE", "MONITOR_EXTERNAL"]),
               default=None, help="Optional MonitorMode filter.")
@@ -895,7 +895,7 @@ def cmd_policy_count(ctx, snapshots, monitor_mode, sites):
 
 @group.command("get-policy-count-needed")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--site", "sites", multiple=True, default=None,
               help="Filter to one or more site names. Repeatable.")
 @pass_context
@@ -918,7 +918,7 @@ def cmd_policy_count_needed(ctx, snapshots, sites):
 
 @group.command("get-policy-groups-count")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--local/--no-local", "local", default=None,
               help="Filter to local=true or local=false policy groups only.")
 @click.option("--site", "sites", multiple=True, default=None,
@@ -944,7 +944,7 @@ def cmd_policy_groups_count(ctx, snapshots, local, sites):
 
 @group.command("get-devices-by-connector")
 @click.option("--snapshot", default=None,
-              help="ISO-8601 snapshot time. Default: previous full hour. Only one allowed.")
+              help="ISO-8601 snapshot time. Default: current hour. Only one allowed.")
 @click.option("--site", "sites", multiple=True, default=None,
               help="Filter to one or more site names. Repeatable.")
 @pass_context
@@ -970,7 +970,7 @@ def cmd_devices_by_connector(ctx, snapshot, sites):
 
 @group.command("get-active-sites-count")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--site", "sites", multiple=True, default=None,
               help="Filter to one or more site names. Repeatable.")
 @pass_context
@@ -989,7 +989,7 @@ def cmd_active_sites_count(ctx, snapshots, sites):
 
 @group.command("get-active-sites-with-activated-policies-count")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--site", "sites", multiple=True, default=None,
               help="Filter to one or more site names. Repeatable.")
 @pass_context
@@ -1014,7 +1014,7 @@ def cmd_active_sites_wap_count(ctx, snapshots, sites):
 
 @group.command("get-virtual-edges-count")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--site", "sites", multiple=True, default=None,
               help="Filter to one or more site names. Repeatable.")
 @pass_context
@@ -1033,7 +1033,7 @@ def cmd_virtual_edges_count(ctx, snapshots, sites):
 
 @group.command("get-virtual-edge-nodes-count")
 @click.option("--snapshot", "snapshots", multiple=True, default=None,
-              help="ISO-8601 snapshot time. Repeatable. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Repeatable. Default: current hour.")
 @click.option("--model", "models", multiple=True, default=None,
               help="Filter to specific VEN model string(s), e.g. 'C9300-48T'. Repeatable.")
 @click.option("--site", "sites", multiple=True, default=None,
@@ -1065,7 +1065,7 @@ def cmd_virtual_edge_nodes_count(ctx, snapshots, models, sites):
 
 @group.command("get-target-sites")
 @click.option("--snapshot", default=None,
-              help="ISO-8601 snapshot time. Default: previous full hour.")
+              help="ISO-8601 snapshot time. Default: current hour.")
 @pass_context
 def cmd_target_sites(ctx, snapshot):
     """Target-sites data (site activation targets).
