@@ -1586,7 +1586,6 @@ shows (with threat-vector breakdowns), use `get-zero-trust-metrics`:
 elisity reporting get-zero-trust-metrics
 
 # Pull a specific snapshot
-elisity reporting get-zero-trust-metrics --snapshot 2026-05-22T11:00:00.000Z
 
 # Server-side site filter (use the site label, e.g. Boston / CORK / Default)
 elisity reporting get-zero-trust-metrics --site Boston
@@ -1605,8 +1604,8 @@ elisity reporting get-zero-trust-metrics --include-mac
 | `siteName` / `policyGroupName` / `policySetName` | Where this row lives |
 | `deviceCount` | Devices counted in this row |
 | `totalFlows` / `restrictedFlows` | Flow totals; `restrictedFlows / totalFlows` ≈ blocked-ratio |
-| `avgDeviceCoverage` | **Zero Trust device-coverage score (0–100)** — UI's Zero Trust Device Score |
-| `avgPolicyCoverage` | **Zero Trust policy-coverage score (0–100)** — UI's Zero Trust Policy Score |
+| `zeroTrustScore` | **Zero Trust score (0–100)** — UI's Zero Trust Device Score |
+| `leastPrivilegeScore` | **Zero Trust policy-coverage score (0–100)** — UI's Zero Trust Policy Score |
 | `l4Metrics.avgAllowedPorts` | Average open-port count per device |
 | `threatVectorMetrics.portExposure[]` | Per-port exposure scores (the malware-lateral-movement page) |
 | `threatVectorMetrics.threatVectors[]` | MITRE ATT&CK technique codes + scores |
@@ -1619,9 +1618,9 @@ elisity reporting get-zero-trust-metrics | jq '
   {
     snapshot: .[0].dateTime,
     total_devices: (map(.deviceCount) | add),
-    weighted_device_coverage: ((map((.avgDeviceCoverage // 0) * .deviceCount) | add)
+    weighted_device_coverage: ((map((.zeroTrustScore // 0) * .deviceCount) | add)
                               / (map(.deviceCount) | add)),
-    weighted_policy_coverage: ((map((.avgPolicyCoverage // 0) * .deviceCount) | add)
+    weighted_policy_coverage: ((map((.leastPrivilegeScore // 0) * .deviceCount) | add)
                               / (map(.deviceCount) | add))
   }'
 ```
@@ -1631,7 +1630,7 @@ top-level flags — place them BEFORE the group name):
 
 ```bash
 elisity -q '[].{site: siteName, pg: policyGroupName,
-              devices: deviceCount, devCov: avgDeviceCoverage, polCov: avgPolicyCoverage}' \
+              devices: deviceCount, devCov: zeroTrustScore, polCov: leastPrivilegeScore}' \
   -f table reporting get-zero-trust-metrics
 ```
 

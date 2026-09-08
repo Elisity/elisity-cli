@@ -25,16 +25,17 @@ from elisity_cli.output import render
 
 GRAPHQL_PATH = "/api/reporting/v1/data"
 
-# Exact query the CCC dashboard sends. Preserved verbatim so the server-side
+# Query shape matches the CCC dashboard (schema as of CCC 26.x: zeroTrustMetrics
+# takes only `site` + `filters`; the snapshot argument was removed server-side
+# and the coverage fields were renamed zeroTrustScore / leastPrivilegeScore).
+# Preserved close to verbatim so the server-side
 # variable-validation step accepts it (@include directives reference the
 # `includeMac` and `includeL4Detail` variables — dropping them produces a
 # `ValidationError: Unused variable` response).
-_ZERO_TRUST_QUERY = """query GetRiskAttributionScores($snapshotDateTimes: [DateTime!]!, $site: [Site!], $includeMac: Boolean!, $includeL4Detail: Boolean = false, $macAddress: [String!], $filters: ZeroTrustFilters) {
+_ZERO_TRUST_QUERY = """query GetRiskAttributionScores($site: [Site!], $includeMac: Boolean!, $includeL4Detail: Boolean = false, $filters: ZeroTrustFilters) {
   policyMetrics {
     zeroTrustMetrics(
-      dateTime: $snapshotDateTimes
       site: $site
-      macAddress: $macAddress
       filters: $filters
     ) {
       dateTime
@@ -51,8 +52,8 @@ _ZERO_TRUST_QUERY = """query GetRiskAttributionScores($snapshotDateTimes: [DateT
       deviceCount
       totalFlows
       restrictedFlows
-      avgDeviceCoverage
-      avgPolicyCoverage
+      zeroTrustScore
+      leastPrivilegeScore
       l4Metrics {
         avgAllowedPorts
         avgAllowedTcp @include(if: $includeL4Detail)
@@ -209,8 +210,8 @@ def cmd_zero_trust(
     """Get Zero Trust scores (the metrics from CCC's Zero Trust page).
 
     Returns one row per (site, policy group, snapshot) with deviceCount,
-    totalFlows, restrictedFlows, avgDeviceCoverage (Zero Trust device score),
-    avgPolicyCoverage (Zero Trust policy score), plus L4 port exposure and
+    totalFlows, restrictedFlows, zeroTrustScore (Zero Trust device score),
+    leastPrivilegeScore (least-privilege policy score), plus L4 port exposure and
     threat-vector metrics (MITRE techniques + port exposure scores).
 
     IMPORTANT — the score alone does NOT tell you *why* it is low. A 0%
@@ -225,12 +226,11 @@ def cmd_zero_trust(
     group name):
 
       elisity reporting get-zero-trust-metrics
-      elisity reporting get-zero-trust-metrics --snapshot 2026-05-22T11:00:00.000Z
       elisity reporting get-zero-trust-metrics --site Boston --site CORK
       elisity reporting get-zero-trust-metrics --include-l4-detail
 
       # Per-policy-group coverage scores
-      elisity -q '[].{site: siteName, pg: policyGroupName, devices: deviceCount, devCov: avgDeviceCoverage, polCov: avgPolicyCoverage}' \\
+      elisity -q '[].{site: siteName, pg: policyGroupName, devices: deviceCount, zt: zeroTrustScore, lp: leastPrivilegeScore}' \\
         -f table reporting get-zero-trust-metrics
 
       # Tenant total device count covered by the snapshot
@@ -239,12 +239,17 @@ def cmd_zero_trust(
       # Device-weighted average coverage via jq (JMESPath lacks generic
       # arithmetic; null-safe with `// 0`)
       elisity reporting get-zero-trust-metrics | jq '
-        (map((.avgDeviceCoverage // 0) * .deviceCount) | add) /
+        (map((.zeroTrustScore // 0) * .deviceCount) | add) /
         (map(.deviceCount) | add)
       '
     """
+    if snapshots:
+        click.echo(
+            "warning: --snapshot is ignored — the CCC reporting schema now serves "
+            "the current snapshot only (argument removed server-side in CCC 26.x).",
+            err=True,
+        )
     variables = {
-        "snapshotDateTimes": list(snapshots) if snapshots else [_default_snapshot()],
         "includeMac": include_mac,
         "includeL4Detail": include_l4_detail,
     }
@@ -377,12 +382,16 @@ def cmd_diagnose_low_score(ctx, snapshot, sites, threshold):
 
     Examples:
       elisity -f table reporting diagnose-low-score
-      elisity reporting diagnose-low-score --snapshot 2026-05-28T11:00:00.000Z
       elisity reporting diagnose-low-score --site Hospital --threshold 100
     """
     # 1. Coverage metrics for the snapshot.
+    if snapshot:
+        click.echo(
+            "warning: --snapshot is ignored — the CCC reporting schema now serves "
+            "the current snapshot only.",
+            err=True,
+        )
     variables = {
-        "snapshotDateTimes": [snapshot] if snapshot else [_default_snapshot()],
         "includeMac": False,
         "includeL4Detail": False,
     }
@@ -416,8 +425,8 @@ def cmd_diagnose_low_score(ctx, snapshot, sites, threshold):
     # 3. Join: flag rows below threshold, classify, attach remediation.
     rows = []
     for m in metrics:
-        dev_cov = m.get("avgDeviceCoverage")
-        pol_cov = m.get("avgPolicyCoverage")
+        dev_cov = m.get("zeroTrustScore")
+        pol_cov = m.get("leastPrivilegeScore")
         low = (dev_cov is None or dev_cov < threshold) or (
             pol_cov is None or pol_cov < threshold
         )
@@ -434,8 +443,8 @@ def cmd_diagnose_low_score(ctx, snapshot, sites, threshold):
                 "policyGroupName": m.get("policyGroupName"),
                 "policyGroupId": m.get("policyGroupId"),
                 "deviceCount": m.get("deviceCount"),
-                "avgDeviceCoverage": dev_cov,
-                "avgPolicyCoverage": pol_cov,
+                "zeroTrustScore": dev_cov,
+                "leastPrivilegeScore": pol_cov,
                 "policiesActive": active,
                 "policiesSimulation": simulation,
                 "policiesExternal": external,
@@ -444,7 +453,7 @@ def cmd_diagnose_low_score(ctx, snapshot, sites, threshold):
             }
         )
 
-    rows.sort(key=lambda r: (r["avgDeviceCoverage"] if r["avgDeviceCoverage"] is not None else -1))
+    rows.sort(key=lambda r: (r["zeroTrustScore"] if r["zeroTrustScore"] is not None else -1))
     render(rows, ctx.format, ctx.query)
 
 
@@ -1208,29 +1217,29 @@ def cmd_list_snapshots(ctx, hours):
       elisity reporting list-snapshots
       elisity reporting list-snapshots --hours 168     # last week
     """
-    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    # CCC 26.x removed the snapshot argument from zeroTrustMetrics: the endpoint
+    # serves only the current snapshot. Report that one (with its server-side
+    # dateTime) rather than probing hours that can no longer be addressed.
+    if hours != 72:
+        click.echo(
+            "warning: --hours is ignored — the CCC reporting schema now serves "
+            "the current snapshot only.",
+            err=True,
+        )
+    result = _post_graphql(
+        ctx,
+        "GetRiskAttributionScores",
+        {"includeMac": False, "includeL4Detail": False},
+        _ZERO_TRUST_QUERY,
+    )
+    _check_errors(result)
+    rows = (
+        result.get("data", {}).get("policyMetrics", {}).get("zeroTrustMetrics") or []
+    )
     available = []
-    for h in range(hours):
-        snap = (now - timedelta(hours=h)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-        result = _post_graphql(
-            ctx,
-            "GetRiskAttributionScores",
-            {
-                "snapshotDateTimes": [snap],
-                "includeMac": False,
-                "includeL4Detail": False,
-            },
-            _ZERO_TRUST_QUERY,
-        )
-        # don't raise on per-snapshot errors — just skip the row
-        if isinstance(result, dict) and result.get("errors"):
-            continue
-        rows = (
-            result.get("data", {}).get("policyMetrics", {}).get("zeroTrustMetrics")
-            or []
-        )
-        if rows:
-            available.append({"snapshot": snap, "rows": len(rows)})
+    if rows:
+        snap = rows[0].get("dateTime")
+        available.append({"snapshot": snap, "rows": len(rows)})
     render(available, ctx.format, ctx.query)
 
 

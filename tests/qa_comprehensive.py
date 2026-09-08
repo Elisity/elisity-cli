@@ -23,7 +23,7 @@ from typing import List, Optional
 # ── Config ──────────────────────────────────────────────────────────────────
 
 ELISITY = "elisity"  # CLI binary name (must be on PATH after pip install)
-CCC_TARGET = "mikektmehome.idp01.elisity.io"
+CCC_TARGET = "<your-ccc>.idp01.elisity.io"
 
 
 @dataclass

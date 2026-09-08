@@ -218,7 +218,7 @@
       {
         "intent": "Per-policy-group device + policy coverage breakdown",
         "command": "elisity reporting get-zero-trust-metrics",
-        "notes": "Returns avgDeviceCoverage + avgPolicyCoverage per (site, PG, snapshot). The matrix behind the headline score."
+        "notes": "Returns zeroTrustScore + leastPrivilegeScore per (site, PG). The matrix behind the headline score."
       },
       {
         "intent": "Show the weights used to compute the Policy Enforcement Score",

@@ -4,7 +4,7 @@
 **Status:** Draft
 **Created:** 2026-04-06
 **Target:** elisity-cli v0.1.0 (442 commands across 10 groups)
-**CCC Target:** mikektmehome.idp01.elisity.io
+**CCC Target:** <your-ccc>.idp01.elisity.io
 
 ---
 
@@ -16,7 +16,7 @@ This test plan validates every functional area of the `elisity` CLI tool. Tests 
 - Host: 10.0.0.175 (Ubuntu Linux)
 - Python: 3.x with venv at `/home/elisity/Projects/elisity-cli/.venv`
 - Profile: `mike-lab` (stored in `~/.elisity/config.yaml`)
-- CCC: `https://mikektmehome.idp01.elisity.io`
+- CCC: `https://<your-ccc>.idp01.elisity.io`
 - Credentials: Service account `iWJZXlLDj7vTRrVB`
 
 ---
@@ -364,7 +364,7 @@ The final report will follow this structure:
 # Elisity CLI — QA Report
 Date: YYYY-MM-DD
 Tester: Obiwan (automated) + Mike (review)
-CCC Target: mikektmehome.idp01.elisity.io
+CCC Target: <your-ccc>.idp01.elisity.io
 
 ## Summary
 - Total Tests: N
