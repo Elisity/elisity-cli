@@ -1585,7 +1585,7 @@ shows (with threat-vector breakdowns), use `get-zero-trust-metrics`:
 # Pull all Zero Trust scores for the latest available snapshot
 elisity reporting get-zero-trust-metrics
 
-# Pull a specific snapshot
+# Per-snapshot retrieval was removed server-side in CCC 26.x; the endpoint serves the current snapshot.
 
 # Server-side site filter (use the site label, e.g. Boston / CORK / Default)
 elisity reporting get-zero-trust-metrics --site Boston

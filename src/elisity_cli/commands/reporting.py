@@ -182,8 +182,8 @@ def _lookup_sites(ctx, site_names: List[str]) -> List[dict]:
     "snapshots",
     multiple=True,
     default=None,
-    help="ISO-8601 snapshot time (top-of-hour UTC, e.g. 2026-05-22T11:00:00.000Z). "
-    "Repeatable. Default: previous full hour.",
+    help="DEPRECATED and ignored: CCC 26.x serves only the current snapshot. "
+    "Accepted for backward compatibility; a warning is written to stderr.",
 )
 @click.option(
     "--site",
@@ -216,7 +216,7 @@ def cmd_zero_trust(
 ):
     """Get Zero Trust scores (the metrics from CCC's Zero Trust page).
 
-    Returns one row per (site, policy group, snapshot) with deviceCount,
+    Returns one row per (site, policy group) for the current snapshot with deviceCount,
     totalFlows, restrictedFlows, zeroTrustScore (Zero Trust device score),
     leastPrivilegeScore (least-privilege policy score), plus L4 port exposure and
     threat-vector metrics (MITRE techniques + port exposure scores).
@@ -1209,25 +1209,24 @@ def cmd_top_ips(ctx, kind, top, from_time, to_time, step_hours, sites):
 @click.option(
     "--hours",
     type=int,
-    default=72,
-    help="How many hours back to probe (default 72).",
+    default=None,
+    help="DEPRECATED and ignored: the server no longer addresses snapshots by hour.",
 )
 @pass_context
 def cmd_list_snapshots(ctx, hours):
-    """Discover which top-of-hour snapshots have data on this tenant.
+    """Report the snapshot the reporting endpoint currently serves.
 
-    /api/reporting/v1/data serves point-in-time snapshots. Not every hour has
-    data — generation cadence varies by tenant. This walks back <hours> hours
-    and returns the (snapshot, row count) pairs that have data.
+    CCC 26.x removed per-hour snapshot addressing from /api/reporting/v1/data;
+    the endpoint serves the current snapshot only. This returns that snapshot's
+    server-side dateTime and row count. `--hours` is accepted but ignored.
 
     Example:
       elisity reporting list-snapshots
-      elisity reporting list-snapshots --hours 168     # last week
     """
     # CCC 26.x removed the snapshot argument from zeroTrustMetrics: the endpoint
     # serves only the current snapshot. Report that one (with its server-side
     # dateTime) rather than probing hours that can no longer be addressed.
-    if hours != 72:
+    if hours is not None:
         click.echo(
             "warning: --hours is ignored — the CCC reporting schema now serves "
             "the current snapshot only.",

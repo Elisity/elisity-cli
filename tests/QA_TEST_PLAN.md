@@ -17,7 +17,7 @@ This test plan validates every functional area of the `elisity` CLI tool. Tests 
 - Python: 3.x with venv at `/home/elisity/Projects/elisity-cli/.venv`
 - Profile: `mike-lab` (stored in `~/.elisity/config.yaml`)
 - CCC: `https://<your-ccc>.idp01.elisity.io`
-- Credentials: Service account `iWJZXlLDj7vTRrVB`
+- Credentials: Service account `<your-service-account-id>`
 
 ---
 
