@@ -118,9 +118,16 @@ def _post_graphql(ctx, operation_name: str, variables: dict, query: str):
 
 
 def _default_snapshot() -> str:
-    """Top-of-hour timestamp for the previous full hour (UTC)."""
+    """Top-of-hour timestamp for the CURRENT hour (UTC).
+
+    CCC publishes the current hour's snapshot as soon as the hour starts, and the
+    dashboard queries with the current time, so the freshest value lives at the
+    current top-of-hour. Requesting the *previous* hour (the pre-2026-09-08
+    behaviour) returned a stale score — e.g. 57.5 for 17:00 while the UI, and any
+    agent passing `now`, already saw 86.0 for 18:00.
+    """
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-    return (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    return now.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
 def _check_errors(result) -> None:
