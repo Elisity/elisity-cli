@@ -237,8 +237,10 @@ def test_device_without_ip_gets_the_body_unchanged(runner, ccc, no_ip):
     assert "Note:" not in result.stderr
 
 
-def test_device_without_ip_on_26_9_puts_the_body_unchanged(runner, ccc):
-    device = {k: v for k, v in ONLINE_DEVICE.items() if k != "ip"}
+@pytest.mark.parametrize("no_ip", [{"ip": None}, {"ip": ""}])
+def test_device_reported_without_ip_on_26_9_puts_the_body_unchanged(runner, ccc, no_ip):
+    # The read says outright the device has no IP: there is no attachment to lose.
+    device = dict(ONLINE_DEVICE, status="Offline", **no_ip)
     ccc.add(responses.GET, READ_URL, json=device)
     ccc.add(responses.PATCH, WRITE_URL, status=405)
     ccc.add(responses.PUT, WRITE_URL, status=204)
@@ -248,6 +250,37 @@ def test_device_without_ip_on_26_9_puts_the_body_unchanged(runner, ccc):
     assert result.exit_code == 0, result.output
     assert writes(ccc) == [("PATCH", WRITE_URL, LABEL_BODY), ("PUT", WRITE_URL, LABEL_BODY)]
     assert "PUT" in result.stderr
+
+
+@pytest.mark.parametrize("body", [LABEL_BODY, dict(LABEL_BODY, ip=None), dict(LABEL_BODY, ip="")])
+def test_read_without_ip_key_on_26_9_refuses_the_put(runner, ccc, body):
+    # Leia M-1: a read with no `ip` key does not prove the device has no IP, and
+    # a PUT without ip to an Online device detaches it. Refuse; send nothing more.
+    device = {k: v for k, v in ONLINE_DEVICE.items() if k != "ip"}
+    ccc.add(responses.GET, READ_URL, json=device)
+    ccc.add(responses.PATCH, WRITE_URL, status=405)
+    ccc.add(responses.PUT, WRITE_URL, status=204)
+
+    result = run(runner, body=body)
+
+    assert result.exit_code == 1
+    assert [c[0] for c in writes(ccc)] == ["PATCH"]
+    assert "did not report its ip" in result.stderr
+    assert "nothing was sent" in result.stderr
+    assert "--allow-ip-removal" in result.stderr
+
+
+def test_read_without_ip_key_on_26_9_puts_a_body_that_carries_ip(runner, ccc):
+    device = {k: v for k, v in ONLINE_DEVICE.items() if k != "ip"}
+    ccc.add(responses.GET, READ_URL, json=device)
+    ccc.add(responses.PATCH, WRITE_URL, status=405)
+    ccc.add(responses.PUT, WRITE_URL, status=204)
+    body = dict(LABEL_BODY, ip="10.20.30.40")
+
+    result = run(runner, body=body)
+
+    assert result.exit_code == 0, result.output
+    assert writes(ccc) == [("PATCH", WRITE_URL, body), ("PUT", WRITE_URL, body)]
 
 
 # ---------------------------------------------------------------------------

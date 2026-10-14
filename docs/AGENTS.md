@@ -285,7 +285,7 @@ safety story:**
 
 ### `update-device` keeps the device attached
 
-`update-device` sends PATCH with the device's current ip/mac/venId (falls back to PUT on CCC 26.9 and earlier); a raw PUT without `ip` detaches the device. `--allow-ip-removal` sends the body as given with PUT — use it only to remove a static IP on purpose.
+`update-device` sends PATCH with the device's current ip/mac/venId (falls back to PUT on CCC 26.9 and earlier); a raw PUT without `ip` detaches the device. `--allow-ip-removal` sends the body as given with PUT — use it only to remove a static IP on purpose. Attributes are version-dependent: on CCC 26.10 the PATCH merges the body's attributes into the layer (omitted ones are kept), on 26.9 and earlier the PUT fallback replaces the STATIC layer (omitted ones are cleared), and `--allow-ip-removal` is the full-replace PUT on every version.
 
 ### Global flags go BEFORE the group
 

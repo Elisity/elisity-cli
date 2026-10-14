@@ -15,6 +15,8 @@ current value. CCC 26.9 and earlier answer that PATCH with 405. So
    with the device's current value — the workaround CCC's own label handlers use
    (ccc b25ab765667). Safe on every version, and it makes the PUT fallback safe.
 2. Sends the filled body with PATCH; on 405 resends the same body with PUT.
+   If that PUT would carry no ip and the read did not say the device has none
+   (no `ip` key at all), it refuses instead: absent is not proof of "no IP".
 
 `--allow-ip-removal` skips both and sends the body as given with PUT, the only
 way to deliberately remove a static IP.
@@ -109,7 +111,8 @@ def update_device(
         )
 
     body = dict(body)
-    filled = fill_attachment(body, read_device(client, device_id))
+    device = read_device(client, device_id)
+    filled = fill_attachment(body, device)
 
     used_put = False
     try:
@@ -118,7 +121,16 @@ def update_device(
         if e.response is None or e.response.status_code != PATCH_NOT_SUPPORTED:
             raise
         # CCC 26.9 and earlier: no PATCH on this path. The body already carries
-        # the device's current ip, so the full-replace PUT keeps it attached.
+        # the device's current ip, so the full-replace PUT keeps it attached --
+        # unless it has none and the read never said the device has no IP. Only
+        # an explicit `"ip": null` / `""` proves there is no attachment to lose.
+        if _is_unset(body.get("ip")) and "ip" not in device:
+            raise RuntimeError(
+                f"PATCH is not supported by this CCC (405) and the read of device {device_id} "
+                "did not report its ip, so a PUT without ip could detach it; nothing was sent. "
+                "Put the device's ip in the body, or use --allow-ip-removal to send the body "
+                "as given with PUT."
+            ) from e
         used_put = True
         try:
             result = client.put(endpoint, data=body, params=params)

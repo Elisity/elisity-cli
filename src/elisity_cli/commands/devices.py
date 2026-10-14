@@ -254,7 +254,7 @@ def cmd_delete(ctx, id, cmd_fmt, cmd_query, confirm):
 @click.option("--target-enrichment-layer", "target_enrichment_layer", type=str, default=None, help="target-enrichment-layer")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
 @click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
-@click.option("--allow-ip-removal", "allow_ip_removal", is_flag=True, default=False, help="Send the body as given with PUT. Without ip this removes the static IP and detaches the device")
+@click.option("--allow-ip-removal", "allow_ip_removal", is_flag=True, default=False, help="Send the body as given with a full-replace PUT; without ip this removes the static IP and detaches the device. Without this flag CCC 26.10 PATCH merges attributes, and the 26.9-and-earlier PUT fallback replaces the STATIC layer")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context

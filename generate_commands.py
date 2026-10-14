@@ -628,7 +628,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
         lines.append('@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")')
     if keep_attachment:
         lines.append(f'@click.option("{ALLOW_IP_REMOVAL_FLAG}", "{ALLOW_IP_REMOVAL_DEST}", is_flag=True, default=False, '
-                     'help="Send the body as given with PUT. Without ip this removes the static IP and detaches the device")')
+                     'help="Send the body as given with a full-replace PUT; without ip this removes the static IP and detaches '
+                     'the device. Without this flag CCC 26.10 PATCH merges attributes, and the 26.9-and-earlier PUT '
+                     'fallback replaces the STATIC layer")')
 
     # Output format/query overrides (allow per-command -f/-q)
     lines.append('@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)')
