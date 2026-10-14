@@ -367,6 +367,31 @@ DESTRUCTIVE_NAME_WORDS = frozenset({
 })
 
 
+# --------------------------------------------------------------------------
+# Device updates that must not detach the device (ENG-31142)
+# --------------------------------------------------------------------------
+# A PUT to this path without `ip` is read by CCC as a static-IP removal and takes
+# the device Offline, so a label-only `update-device` knocked live devices off the
+# network. For these operations the command calls the hand-written
+# elisity_cli.device_update.update_device() instead of client.put(): it fills the
+# device's current ip/mac/venId and sends PATCH, falling back to PUT on CCC 26.9
+# and earlier (405). The logic lives outside commands/ so regeneration cannot
+# erase it; the generator only emits the call and the --allow-ip-removal opt-out.
+#
+# Keyed by (method, path) like the --confirm gate, and mapped to the command name
+# the guard must land on: main() refuses to generate if the operation is gone or
+# would be emitted under another name, so a spec bump cannot silently drop it.
+KEEP_DEVICE_ATTACHMENT_OPERATIONS = {
+    ("put", "/api/identity-graph/v1/devices/{id}"): "update-device",
+}
+ALLOW_IP_REMOVAL_DEST = "allow_ip_removal"
+ALLOW_IP_REMOVAL_FLAG = "--allow-ip-removal"
+
+
+def keeps_device_attachment(method: str, path: str) -> bool:
+    return (method.lower(), path) in KEEP_DEVICE_ATTACHMENT_OPERATIONS
+
+
 def _unique_name(base: str, used: set, suffix: str = "") -> str:
     """Return `base` if free, else a numbered variant. Records the result.
 
@@ -402,6 +427,9 @@ def resolve_parameter_names(method: str, path_params: list, query_params: list,
     if is_destructive_operation(method, path):
         used_dests.add(CONFIRM_GUARD_DEST)
         used_flags |= CONFIRM_GUARD_FLAGS
+    if keeps_device_attachment(method, path):
+        used_dests.add(ALLOW_IP_REMOVAL_DEST)
+        used_flags.add(ALLOW_IP_REMOVAL_FLAG)
 
     resolved_path = []
     for pname, ptype, pdesc in path_params:
@@ -557,6 +585,12 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     # Collision-free Click flags + Python identifiers. Wire names are unchanged.
     rpath, rquery = resolve_parameter_names(method, path_params, query_params, path)
     destructive = is_destructive_operation(method, path)
+    keep_attachment = keeps_device_attachment(method, path)
+    if keep_attachment and (not has_body or len(rpath) != 1):
+        raise ValueError(
+            f"{method.upper()} {path} is in KEEP_DEVICE_ATTACHMENT_OPERATIONS but no "
+            "longer has a request body and a single device-id path parameter"
+        )
 
     lines = []
 
@@ -592,6 +626,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     if has_body:
         lines.append('@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")')
         lines.append('@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")')
+    if keep_attachment:
+        lines.append(f'@click.option("{ALLOW_IP_REMOVAL_FLAG}", "{ALLOW_IP_REMOVAL_DEST}", is_flag=True, default=False, '
+                     'help="Send the body as given with PUT. Without ip this removes the static IP and detaches the device")')
 
     # Output format/query overrides (allow per-command -f/-q)
     lines.append('@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)')
@@ -613,6 +650,8 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     sig_parts.extend(["cmd_fmt", "cmd_query"])
     if destructive:
         sig_parts.append("confirm")
+    if keep_attachment:
+        sig_parts.append(ALLOW_IP_REMOVAL_DEST)
 
     lines.append(f'def cmd_{func_name}({", ".join(sig_parts)}):')
     lines.append(f'    """{summary}"""')
@@ -655,10 +694,15 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
         lines.append("        body = _json.loads(body_data)")
 
     # Make the API call
+    if keep_attachment:
+        lines.append("    from elisity_cli.device_update import update_device")
     lines.append("    client = ctx.ensure_client()")
     lines.append("    try:")
     method_lower = method.lower()
-    if method_lower == "get":
+    if keep_attachment:
+        lines.append(f"        result = update_device(client, endpoint, {rpath[0]['dest']}, body, params, "
+                     f"allow_ip_removal={ALLOW_IP_REMOVAL_DEST})")
+    elif method_lower == "get":
         if is_ndjson:
             lines.append("        result = client.get_ndjson(endpoint, params=params)")
         else:
@@ -918,6 +962,34 @@ def _sample_path_for_tag(spec: dict, tag: str) -> str:
     return ""
 
 
+def assert_device_attachment_guarded(groups: dict) -> None:
+    """Fail generation if a KEEP_DEVICE_ATTACHMENT_OPERATIONS entry cannot attach.
+
+    The guard is what keeps a label-only `update-device` from knocking a device
+    offline. If CCC renames the path, drops the PUT, or a new operation takes the
+    command name first (e.g. a PATCH whose operationId also sanitizes to
+    `update-device`), the guard would quietly stop applying to the command users
+    run. Refuse instead, and name what moved.
+    """
+    emitted = {}
+    for commands in groups.values():
+        for method, path, op, cmd_name in dedupe_command_names(commands):
+            emitted[(method.lower(), path)] = cmd_name
+    problems = []
+    for key, expected in sorted(KEEP_DEVICE_ATTACHMENT_OPERATIONS.items()):
+        actual = emitted.get(key)
+        if actual is None:
+            problems.append(f"  {key[0].upper()} {key[1]} is not in the spec")
+        elif actual != expected:
+            problems.append(f"  {key[0].upper()} {key[1]} would be emitted as `{actual}`, not `{expected}`")
+    if problems:
+        raise SystemExit(
+            "ERROR: the device-attachment guard (ENG-31142) cannot attach:\n"
+            + "\n".join(problems)
+            + "\nUpdate KEEP_DEVICE_ATTACHMENT_OPERATIONS in generate_commands.py, then regenerate."
+        )
+
+
 def render_init_module(generated_groups) -> str:
     """Render commands/__init__.py, keeping hand-coded groups registered."""
     all_groups = sorted(set(generated_groups) | set(HANDCODED_GROUPS))
@@ -978,6 +1050,9 @@ def main(argv=None):
             f"{', '.join(collisions)}. Regenerating would overwrite hand-written "
             "commands. Fix TAG_TO_GROUP (or HANDCODED_GROUPS) before regenerating."
         )
+
+    # Before anything is written, like the two guards above.
+    assert_device_attachment_guarded(groups)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 

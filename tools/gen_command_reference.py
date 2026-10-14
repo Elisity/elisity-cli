@@ -42,8 +42,11 @@ DOCSTRING_RE = re.compile(r'def cmd_\w+\([^)]*\):\s*\n\s*"""(.*?)"""', re.DOTALL
 # `get_ndjson` is a GET that streams newline-delimited JSON. It must be listed
 # in the same section as any other GET — matching only `client.get(` silently
 # dropped all 14 NDJSON commands out of the Quick Find tables.
-VERB_RE = re.compile(r"client\.(get_ndjson|get|post|put|patch|delete)\(")
-VERB_ALIASES = {"get_ndjson": "get"}
+# `update_device` is the ENG-31142 device update (generate_commands.py
+# KEEP_DEVICE_ATTACHMENT_OPERATIONS): it sends PATCH, falling back to PUT on
+# CCC 26.9 and earlier. Unmatched, `update-device` would drop out of the tables.
+VERB_RE = re.compile(r"client\.(get_ndjson|get|post|put|patch|delete)\(|= (update_device)\(client")
+VERB_ALIASES = {"get_ndjson": "get", "update_device": "patch"}
 
 VERB_SECTIONS = [
     ("List / Get operations", ("get",)),
@@ -119,7 +122,7 @@ def parse_group(path: Path) -> list:
         doc = DOCSTRING_RE.search(body)
         desc = _escape(doc.group(1)) if doc else ""
         verb = VERB_RE.search(body)
-        raw = verb.group(1) if verb else ""
+        raw = verb.group(verb.lastindex) if verb else ""
         out.append((name, desc, VERB_ALIASES.get(raw, raw)))
     return out
 

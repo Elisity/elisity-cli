@@ -254,10 +254,11 @@ def cmd_delete(ctx, id, cmd_fmt, cmd_query, confirm):
 @click.option("--target-enrichment-layer", "target_enrichment_layer", type=str, default=None, help="target-enrichment-layer")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
 @click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--allow-ip-removal", "allow_ip_removal", is_flag=True, default=False, help="Send the body as given with PUT. Without ip this removes the static IP and detaches the device")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_update_device(ctx, id, target_enrichment_layer, body_data, body_file, cmd_fmt, cmd_query):
+def cmd_update_device(ctx, id, target_enrichment_layer, body_data, body_file, cmd_fmt, cmd_query, allow_ip_removal):
     """Update device by ID"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -275,9 +276,10 @@ def cmd_update_device(ctx, id, target_enrichment_layer, body_data, body_file, cm
     elif body_data:
         import json as _json
         body = _json.loads(body_data)
+    from elisity_cli.device_update import update_device
     client = ctx.ensure_client()
     try:
-        result = client.put(endpoint, data=body, params=params)
+        result = update_device(client, endpoint, id, body, params, allow_ip_removal=allow_ip_removal)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)

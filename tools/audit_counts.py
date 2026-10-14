@@ -73,7 +73,9 @@ def split_command_blocks(source: str, decorator: str = "@group.command(") -> lis
     return blocks
 
 
-VERB_RE = re.compile(r"client\.(get|get_ndjson|post|put|patch|delete)\(")
+# `update_device` is the ENG-31142 device update (PATCH, PUT fallback on 405).
+VERB_RE = re.compile(r"client\.(get|get_ndjson|post|put|patch|delete)\(|= (update_device)\(client")
+VERB_ALIASES = {"get_ndjson": "get", "update_device": "patch"}
 ENDPOINT_RE = re.compile(r'endpoint = f?"([^"]+)"')
 
 
@@ -86,7 +88,11 @@ def describe_command(block: str) -> tuple:
     """
     verb = VERB_RE.search(block)
     endpoint = ENDPOINT_RE.search(block)
-    verb = {"get_ndjson": "get"}.get(verb.group(1), verb.group(1)) if verb else ""
+    if verb:
+        raw = verb.group(verb.lastindex)
+        verb = VERB_ALIASES.get(raw, raw)
+    else:
+        verb = ""
     return verb.upper(), (endpoint.group(1) if endpoint else "")
 
 

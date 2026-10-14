@@ -283,6 +283,10 @@ safety story:**
    state and takes **no** `--confirm`. The absence of the flag is not permission
    to run them unattended — the human-approval rule below is what governs those.
 
+### `update-device` keeps the device attached
+
+`update-device` sends PATCH with the device's current ip/mac/venId (falls back to PUT on CCC 26.9 and earlier); a raw PUT without `ip` detaches the device. `--allow-ip-removal` sends the body as given with PUT — use it only to remove a static IP on purpose.
+
 ### Global flags go BEFORE the group
 
 `-f`, `-q`, `--debug`, and `-p` are options on the root `cli` group. They must
