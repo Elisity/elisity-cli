@@ -772,6 +772,400 @@ def cmd_discover_ec2workloads(ctx, connectorid, cmd_fmt, cmd_query):
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
+@group.command("validate-azure-region-permissions-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_validate_azure_region_permissions_existing(ctx, connectorid, endpointid, body_data, body_file, cmd_fmt, cmd_query):
+    """Validate an existing endpoint's region filter against its subscriptions"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/validate-region-permissions"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("validate-azure-permissions-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_validate_azure_permissions_existing(ctx, connectorid, endpointid, cmd_fmt, cmd_query):
+    """Validate Azure permissions for an existing connector endpoint"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/validate-permissions"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("validate-azure-connection-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_validate_azure_connection_existing(ctx, connectorid, endpointid, body_data, body_file, cmd_fmt, cmd_query):
+    """Validate the Azure connection of an existing endpoint, optionally with edited credentials"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/validate-connection"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-subscriptions-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_subscriptions_existing(ctx, connectorid, endpointid, cmd_fmt, cmd_query):
+    """List Azure subscriptions for an existing connector endpoint"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/subscriptions"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("preview-azure-scope-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_preview_azure_scope_existing(ctx, connectorid, endpointid, cmd_fmt, cmd_query):
+    """Preview the scope of an existing endpoint (post-creation scope edit)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/scope-preview"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-resource-groups-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_resource_groups_existing(ctx, connectorid, endpointid, cmd_fmt, cmd_query):
+    """List Azure resource groups (with VM counts) for an existing endpoint"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/resource-groups"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-regions-existing")
+@click.argument("connectorid")
+@click.argument("endpointid")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_regions_existing(ctx, connectorid, endpointid, body_data, body_file, cmd_fmt, cmd_query):
+    """List Azure regions available to an existing endpoint's subscriptions"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/{connectorid}/{endpointid}/regions"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("validate-azure-region-permissions-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_validate_azure_region_permissions_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Validate a new endpoint's region filter against its subscriptions (pre-creation)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/validate-region-permissions"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("validate-azure-permissions-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_validate_azure_permissions_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Validate Azure permissions for a new endpoint (pre-creation)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/validate-permissions"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("validate-azure-connection-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_validate_azure_connection_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Validate Azure connection for a new endpoint (pre-creation)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/validate-connection"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-subscriptions-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_subscriptions_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """List Azure subscriptions for a new endpoint (pre-creation)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/subscriptions"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("preview-azure-scope-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_preview_azure_scope_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Preview a scope before creating the connector"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/scope-preview"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-resource-groups-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_resource_groups_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """List Azure resource groups (with VM counts) for a new endpoint's scope"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/resource-groups"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-regions-pre-creation")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_regions_pre_creation(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """List Azure regions available to a new endpoint's subscriptions (pre-creation)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/regions"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("sync-endpoint")
 @click.argument("connectorid")
 @click.argument("endpointid")
@@ -1011,6 +1405,66 @@ def cmd_get_device_aggregate(ctx, body_data, body_file, cmd_fmt, cmd_query):
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
+@group.command("attach-workloads")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_attach_workloads(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Attach a batch of workloads reported by a VEN"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/v1/workloads/attached"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("attach-workload")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_attach_workload(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Attach a workload reported by a VEN, creating it if it does not exist"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/v1/workloads/attach"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("get-configurations")
 @click.option("--status", "status", type=str, default=None, help="Filter configurations by status (CURRENT, UPCOMING, PAST)")
 @click.option("--name", "name", type=str, default=None, help="Filter configurations by name pattern (optional)")
@@ -1121,21 +1575,24 @@ def cmd_get_configurations_by_ids(ctx, body_data, body_file, cmd_fmt, cmd_query)
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
-@group.command("get-users")
+@group.command("search-suppression-list")
+@click.option("--filters", "filters", type=str, required=True, help="filters")
 @click.option("--page", "page", type=int, default=None, help="Page number")
 @click.option("--size", "size", type=int, default=None, help="Page size (max: 1000)")
 @click.option("--sort", "sort", type=str, default=None, help="Sort by column")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_get_users(ctx, page, size, sort, cmd_fmt, cmd_query):
-    """Get all entries (paged)"""
+def cmd_search_suppression_list(ctx, filters, page, size, sort, cmd_fmt, cmd_query):
+    """Get all entries (paged, searchable and filterable)"""
     if cmd_fmt:
         ctx.format = cmd_fmt
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/identity-graph/v1/suppression"
     params = {}
+    if filters is not None:
+        params["filters"] = filters
     if page is not None:
         params["page"] = page
     if size is not None:
@@ -1163,6 +1620,36 @@ def cmd_create(ctx, body_data, body_file, cmd_fmt, cmd_query):
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/identity-graph/v1/suppression"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("export-suppression-list")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_export_suppression_list(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Export entries as CSV"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/v1/suppression/export"
     params = None
     body = None
     if body_file:
@@ -1852,6 +2339,26 @@ def cmd_get_auth_methods(ctx, cmd_fmt, cmd_query):
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/identity-graph/workloads/discovery/setup/aws/auth-methods"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("list-azure-required-permissions")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_azure_required_permissions(ctx, cmd_fmt, cmd_query):
+    """List the ARM permissions the connector needs, by tier"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/workloads/discovery/azure/setup/permissions"
     params = None
     client = ctx.ensure_client()
     try:

@@ -256,6 +256,36 @@ def cmd_get_dash_board_summary_data(ctx, body_data, body_file, cmd_fmt, cmd_quer
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
+@group.command("accept-app-flow-data")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_accept_app_flow_data(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """POST /flow/api/appflowdata"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/flow/api/appflowdata"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("get-noise-definition")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
@@ -289,6 +319,66 @@ def cmd_update_noise_definition(ctx, body_data, body_file, cmd_fmt, cmd_query):
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/flows/v1/noisedefinition"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("accept-flow-data")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_accept_flow_data(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """POST /flow/api/flowdata"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/flow/api/flowdata"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("accept-flows")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_accept_flows(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """POST /api/flows/v1/flows"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/flows/v1/flows"
     params = None
     body = None
     if body_file:

@@ -16,6 +16,50 @@ def group(ctx):
     """Manage network topology — sites, zones, VE groups, VEs, VENs, flow exporters"""
     pass
 
+@group.command("list-workload-distribution-zones")
+@click.option("--id", "id", type=str, default=None, help="Optional filter — matches either the zone's numericId or its UUID")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_list_workload_distribution_zones(ctx, id, cmd_fmt, cmd_query):
+    """List Workload Distribution Zones known to Identity Graph"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/v1/workload-distribution-zones"
+    params = {}
+    if id is not None:
+        params["id"] = id
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-workload-distribution-zone-usage")
+@click.argument("id")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_workload_distribution_zone_usage(ctx, id, cmd_fmt, cmd_query):
+    """Report whether a Workload Distribution Zone is referenced by any workload-discovery connector endpoint"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/identity-graph/v1/workload-distribution-zones/{id}/usage"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("get-site-v2")
 @click.argument("id")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
@@ -1281,10 +1325,11 @@ def cmd_delete_flow_exporter(ctx, id, cmd_fmt, cmd_query, confirm):
 
 @group.command("get-all-distribution-zones")
 @click.option("--includeIsolated", "includeIsolated", type=bool, default=False, help="When `true`, Isolated Distribution Zones are included in the response. Isolated ")
+@click.option("--includeWorkload", "includeWorkload", type=bool, default=False, help="When `true`, Workload Distribution Zones are included in the response. Workload ")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_get_all_distribution_zones(ctx, includeIsolated, cmd_fmt, cmd_query):
+def cmd_get_all_distribution_zones(ctx, includeIsolated, includeWorkload, cmd_fmt, cmd_query):
     """Get all Distribution Zones"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -1294,6 +1339,8 @@ def cmd_get_all_distribution_zones(ctx, includeIsolated, cmd_fmt, cmd_query):
     params = {}
     if includeIsolated is not None:
         params["includeIsolated"] = includeIsolated
+    if includeWorkload is not None:
+        params["includeWorkload"] = includeWorkload
     client = ctx.ensure_client()
     try:
         result = client.get(endpoint, params=params)
@@ -1490,6 +1537,39 @@ def cmd_search_virtual_edge_nodes(ctx, page, size, sort, body_data, body_file, c
         params["size"] = size
     if sort is not None:
         params["sort"] = sort
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-virtual-edge-nodes-metrics-summary")
+@click.option("--dimensions", "dimensions", type=str, default=None, help="Comma-separated dimension keys to compute; defaults to all registered dimensions")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_virtual_edge_nodes_metrics_summary(ctx, dimensions, body_data, body_file, cmd_fmt, cmd_query):
+    """Aggregated VEN counts grouped per dimension (metrics summary)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/topology/v2/virtual-edge-nodes/metrics/summary"
+    params = {}
+    if dimensions is not None:
+        params["dimensions"] = dimensions
     body = None
     if body_file:
         import json as _json
@@ -2083,6 +2163,45 @@ def cmd_register(ctx, body_data, body_file, cmd_fmt, cmd_query):
         ctx.query = cmd_query
     endpoint = f"/api/topology/v1/virtual-edges/register"
     params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-virtual-edges-metrics-summary")
+@click.option("--dimensions", "dimensions", type=str, default=None, help="Comma-separated dimension keys to compute; defaults to every registered dimensio")
+@click.option("--topN", "topN", type=int, default=5, help="Highlight list size for dimensions that have one (1..100)")
+@click.option("--versionFloor", "versionFloor", type=str, default=None, help="Lowest supported version (computed by the FE) — required when the upgradeStatus ")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_virtual_edges_metrics_summary(ctx, dimensions, topN, versionFloor, body_data, body_file, cmd_fmt, cmd_query):
+    """Aggregated VE counts grouped per dimension (metrics summary)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/topology/v1/virtual-edges/metrics/summary"
+    params = {}
+    if dimensions is not None:
+        params["dimensions"] = dimensions
+    if topN is not None:
+        params["topN"] = topN
+    if versionFloor is not None:
+        params["versionFloor"] = versionFloor
     body = None
     if body_file:
         import json as _json

@@ -481,7 +481,9 @@ def cat6_all_groups():
          check_json)
 
     test("C6", "C6.25", "devices: get suppression list",
-         ["devices", "get-users"],
+         # CCC 26.9: renamed from get-users; `filters` became a required
+         # (form-exploded object) query parameter.
+         ["devices", "search-suppression-list", "--filters", "{}"],
          check_json)
 
     test("C6", "C6.26", "devices: time-based configs",

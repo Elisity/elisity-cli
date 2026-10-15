@@ -635,7 +635,7 @@ def cmd_pause_snapshot_schedule(ctx, id, cmd_fmt, cmd_query):
 @group.command("search-snapshot-schedules")
 @click.option("--name", "name", type=str, default=None, help="Filter by name (partial match, case-insensitive)")
 @click.option("--description", "description", type=str, default=None, help="Filter by description (partial match, case-insensitive)")
-@click.option("--dashboard", "dashboard", type=str, default=None, help="Filter by dashboard (exact match)")
+@click.option("--source", "source", type=str, default=None, help="Filter by report source (exact match)")
 @click.option("--status", "status", type=str, default=None, help="Filter by status (exact match)")
 @click.option("--type", "type_param", type=str, default=None, help="Filter by type: ONE_TIME or RECURRING")
 @click.option("--createdBy", "createdBy", type=str, default=None, help="Filter by created by (partial match, case-insensitive)")
@@ -645,7 +645,7 @@ def cmd_pause_snapshot_schedule(ctx, id, cmd_fmt, cmd_query):
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_search_snapshot_schedules(ctx, name, description, dashboard, status, type_param, createdBy, page, size, sort, cmd_fmt, cmd_query):
+def cmd_search_snapshot_schedules(ctx, name, description, source, status, type_param, createdBy, page, size, sort, cmd_fmt, cmd_query):
     """Search snapshot schedules"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -657,8 +657,8 @@ def cmd_search_snapshot_schedules(ctx, name, description, dashboard, status, typ
         params["name"] = name
     if description is not None:
         params["description"] = description
-    if dashboard is not None:
-        params["dashboard"] = dashboard
+    if source is not None:
+        params["source"] = source
     if status is not None:
         params["status"] = status
     if type_param is not None:
@@ -709,18 +709,60 @@ def cmd_create_snapshot_schedule(ctx, body_data, body_file, cmd_fmt, cmd_query):
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
-@group.command("retrieve-snapshot-image")
+@group.command("retrieve-snapshot-pdf")
 @click.argument("id")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_retrieve_snapshot_image(ctx, id, cmd_fmt, cmd_query):
+def cmd_retrieve_snapshot_pdf(ctx, id, cmd_fmt, cmd_query):
     """Get snapshot PDF"""
     if cmd_fmt:
         ctx.format = cmd_fmt
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/reporting/v1/snapshots/{id}.pdf"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("retrieve-snapshot-markdown")
+@click.argument("id")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_retrieve_snapshot_markdown(ctx, id, cmd_fmt, cmd_query):
+    """Get snapshot Markdown"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/reporting/v1/snapshots/{id}.md"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("retrieve-snapshot-evidence")
+@click.argument("id")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_retrieve_snapshot_evidence(ctx, id, cmd_fmt, cmd_query):
+    """Get snapshot evidence package"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/reporting/v1/snapshots/{id}.evidence.json"
     params = None
     client = ctx.ensure_client()
     try:
@@ -755,7 +797,7 @@ def cmd_retrieve_snapshot(ctx, id, cmd_fmt, cmd_query):
 @click.option("--schedule", "schedule", type=str, default=None, help="Filter by schedule ID (exact match)")
 @click.option("--scheduleName", "scheduleName", type=str, default=None, help="Filter by schedule name (partial match, case-insensitive)")
 @click.option("--scheduleDescription", "scheduleDescription", type=str, default=None, help="Filter by schedule description (partial match, case-insensitive)")
-@click.option("--dashboard", "dashboard", type=str, default=None, help="Filter by dashboard (exact match)")
+@click.option("--source", "source", type=str, default=None, help="Filter by report source (exact match)")
 @click.option("--status", "status", type=str, default=None, help="Filter by status (exact match)")
 @click.option("--page", "page", type=int, default=0, help="Zero-based page index (0..N)")
 @click.option("--size", "size", type=int, default=20, help="The size of the page to be returned")
@@ -763,7 +805,7 @@ def cmd_retrieve_snapshot(ctx, id, cmd_fmt, cmd_query):
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_search_snapshots(ctx, schedule, scheduleName, scheduleDescription, dashboard, status, page, size, sort, cmd_fmt, cmd_query):
+def cmd_search_snapshots(ctx, schedule, scheduleName, scheduleDescription, source, status, page, size, sort, cmd_fmt, cmd_query):
     """Search snapshots"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -777,8 +819,8 @@ def cmd_search_snapshots(ctx, schedule, scheduleName, scheduleDescription, dashb
         params["scheduleName"] = scheduleName
     if scheduleDescription is not None:
         params["scheduleDescription"] = scheduleDescription
-    if dashboard is not None:
-        params["dashboard"] = dashboard
+    if source is not None:
+        params["source"] = source
     if status is not None:
         params["status"] = status
     if page is not None:

@@ -305,7 +305,7 @@ class TestReconciliation:
         out = render(diff)
         removed_section = out.split("### Removed commands")[1].split("###")[0]
         assert "`elisity policy get-enforcement-score`" in removed_section
-        assert "These 1 commands are gone" in removed_section
+        assert "This command is gone" in removed_section
 
     def test_a_name_taken_over_by_another_operation_gets_its_own_section(self):
         """The quiet one. `/api/policy/v1/state` was deleted; the surviving

@@ -6,7 +6,7 @@ say in the UI, the official context, and the CLI commands that implement the
 concept.
 
 The data here is generated from `data/ui-to-cli-mapping.json` and reflects the
-613-command CLI surface. Synonyms are derived from the upstream
+658-command CLI surface. Synonyms are derived from the upstream
 `Elisity/ccc:product-glossary.json` — if a term you expect is missing, run
 `elisity glossary list` to see the full set.
 

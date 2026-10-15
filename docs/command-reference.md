@@ -1,21 +1,21 @@
 # Elisity CLI -- Command Reference
 
-> The 583 REST commands below are auto-generated from the Elisity CCC OpenAPI
+> The 631 REST commands below are auto-generated from the Elisity CCC OpenAPI
 > specification. The `reporting` group (17 commands) is hand-coded against the
 > CCC GraphQL endpoint at `/api/reporting/v1/data` and is NOT listed in this
 > reference — see [user-guide.md](user-guide.md) section 9 for the full
 > reporting catalog.
 >
-> **607 commands** total: 583 auto-generated REST + 17 hand-coded GraphQL
+> **655 commands** total: 631 auto-generated REST + 17 hand-coded GraphQL
 > reporting + 7 CLI-native (auth + config). 11 groups total. (Excludes the 3
-> CLI-native `glossary` commands; see README for the full 610-command count.)
+> CLI-native `glossary` commands; see README for the full 658-command count.)
 >
 > This file is generated — run `python3 tools/gen_command_reference.py` after
 > regenerating commands. Do not edit it by hand.
 
 ## Quick Find by Operation Type
 
-### List / Get operations (208 commands)
+### List / Get operations (215 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
@@ -34,6 +34,8 @@
 | ad | `get-dc-bookmark` | Get DC bookmark for specific AD Agent and DC hostname |
 | ad | `get-distribution-zone-assignments` | Get distribution zone assignments per connector |
 | ad | `get-entra-users` | Entra users |
+| ad | `get-groups-count` | Get groups count |
+| ad | `get-groups-default-enabled` | Get the 'enable all groups by default' toggle |
 | ad | `get-isolated-distribution-zones` | GET /api/ad-connector-service/v1/distribution-zones |
 | ad | `get-pull-status` | Get the status of a previously-initiated log pull; on success streams the ZIP bytes |
 | ad | `get-suppressed-ip-attaches` | Get all suppressed IP attaches |
@@ -74,11 +76,11 @@
 | devices | `get-permissions-policy` | Get the IAM permissions policy for ElisityCloudDiscoveryPolicy |
 | devices | `get-raw-enrichment-order` | Read raw enrichment order settings entry |
 | devices | `get-specification` | Read workload attribute specification |
-| devices | `get-users` | Get all entries (paged) |
 | devices | `get-values-for-device-attribute` | Get values for device attribute |
 | devices | `get-workload-count` | Get workload count |
 | devices | `get-workload-details` | Get workload by ID |
 | devices | `list-all-custom-connector-icons-base64` | List all Custom Connector icons (base64) |
+| devices | `list-azure-required-permissions` | List the ARM permissions the connector needs, by tier |
 | devices | `read-all-layer-instances-specification` | Read dynamic specification of all layers |
 | devices | `read-all-settings` | Read all settings entries |
 | devices | `read-device` | Get device by ID |
@@ -86,6 +88,7 @@
 | devices | `read-static-layer-specification` | Read static layer specification |
 | devices | `search-by-name` | Search time-based configurations by name |
 | devices | `search-device` | Search device by MAC |
+| devices | `search-suppression-list` | Get all entries (paged, searchable and filterable) |
 | devices | `stream-digest` | Stream device digest |
 | flows | `get-available-ports` | Get all available ports and their names |
 | flows | `get-capabilities` | Get analytics capabilities |
@@ -177,7 +180,9 @@
 | system | `list-specs` | List all specs |
 | system | `list-tasks` | List tasks |
 | system | `retrieve-snapshot` | Get snapshot by ID |
-| system | `retrieve-snapshot-image` | Get snapshot PDF |
+| system | `retrieve-snapshot-evidence` | Get snapshot evidence package |
+| system | `retrieve-snapshot-markdown` | Get snapshot Markdown |
+| system | `retrieve-snapshot-pdf` | Get snapshot PDF |
 | system | `retrieve-snapshot-schedule` | Get snapshot schedule by ID |
 | system | `search-snapshot-schedules` | Search snapshot schedules |
 | system | `search-snapshots` | Search snapshots |
@@ -226,17 +231,23 @@
 | topology | `get-virtual-edge-node-firewall-rules` | List of Firewalls and Firewall rules for given Virtual Edge Node with pagination |
 | topology | `get-virtual-edge-nodes` | List Virtual Edge Nodes with pagination and sorting |
 | topology | `get-virtual-edge-nodes-for-distribution-zone` | Get all Virtual Edge Nodes for a Distribution Zone |
+| topology | `get-workload-distribution-zone-usage` | Report whether a Workload Distribution Zone is referenced by any workload-discovery connector endpoint |
 | topology | `is-imbalanced` | Check if Virtual Edge Group is imbalanced |
+| topology | `list-workload-distribution-zones` | List Workload Distribution Zones known to Identity Graph |
 
-### Create operations (232 commands)
+### Create operations (271 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
 | ad | `agent-status` | Set AD Agent and DC status |
 | ad | `export` | Generate AD Agents export as CSV |
+| ad | `export-groups` | Generate groups export as XLSX |
 | ad | `export-users` | Generate users export as CSV |
 | ad | `export-users-logon-history` | Generate users logon export as CSV |
 | ad | `export-users-post` | Generate Entra users export as CSV |
+| ad | `get-group-devices` | Get devices that are direct members of a group |
+| ad | `get-group-users` | Get users that are direct members of a group |
+| ad | `get-groups-view` | Get groups view |
 | ad | `pull-logs` | Initiate a log pull from an AD Agent |
 | ad | `refresh-all-ad-on-prem` | Refresh all AD on-prem subscriptions |
 | ad | `refresh-all-entra` | Refresh all Entra subscriptions |
@@ -262,11 +273,16 @@
 | connectors | `create-connector` | Create new connector configuration |
 | connectors | `create-connector-configuration` | Create new connector configuration |
 | connectors | `export-devices` | Export devices for custom connector as XLSX |
+| connectors | `fetch-tanium-sensor-catalog` | Fetch the Tanium sensor catalog |
+| connectors | `fetch-tanium-sensor-detail` | Look up one Tanium sensor by exact name |
 | connectors | `import-file` | Import XLS/XLSX file with Custom Connector data |
+| connectors | `probe-tanium-sensor-mapping` | Probe a draft sensor mapping |
 | connectors | `validate-connector-endpoint-configuration` | Validate connector endpoint configuration |
 | connectors | `validate-endpoint-for-connector` | Validate endpoint configuration for existing connector |
 | connectors | `validate-endpoint-pre-creation` | Validate endpoint configuration before connector creation |
 | devices | `attach` | Attach device by MAC or create new one if not exists |
+| devices | `attach-workload` | Attach a workload reported by a VEN, creating it if it does not exist |
+| devices | `attach-workloads` | Attach a batch of workloads reported by a VEN |
 | devices | `attached` | Attach devices by MAC or create new ones if not exists |
 | devices | `bulk-create-devices` | Create new devices |
 | devices | `bulk-create-devices-from-file` | Create new devices from XLSX file |
@@ -287,6 +303,7 @@
 | devices | `execute-synchronous-on-demand-enrichment-post` | Execute a synchronous on demand enrichment of given device for all sources |
 | devices | `export-devices` | Generate devices export |
 | devices | `export-devices-from-view` | Export devices to CSV or XLSX |
+| devices | `export-suppression-list` | Export entries as CSV |
 | devices | `generate-external-id` | Generate external ID and account ID for IAM role setup |
 | devices | `generate-trust-policy` | Generate trust policy JSON for the customer's IAM role |
 | devices | `get-configurations-by-ids` | Get multiple time-based configurations by IDs |
@@ -296,14 +313,31 @@
 | devices | `get-workloads-view` | List workloads |
 | devices | `list-available-regions` | List available AWS regions for an endpoint's credentials |
 | devices | `list-available-regions-existing` | List available AWS regions for an existing connector endpoint |
+| devices | `list-azure-regions-existing` | List Azure regions available to an existing endpoint's subscriptions |
+| devices | `list-azure-regions-pre-creation` | List Azure regions available to a new endpoint's subscriptions (pre-creation) |
+| devices | `list-azure-resource-groups-existing` | List Azure resource groups (with VM counts) for an existing endpoint |
+| devices | `list-azure-resource-groups-pre-creation` | List Azure resource groups (with VM counts) for a new endpoint's scope |
+| devices | `list-azure-subscriptions-existing` | List Azure subscriptions for an existing connector endpoint |
+| devices | `list-azure-subscriptions-pre-creation` | List Azure subscriptions for a new endpoint (pre-creation) |
+| devices | `preview-azure-scope-existing` | Preview the scope of an existing endpoint (post-creation scope edit) |
+| devices | `preview-azure-scope-pre-creation` | Preview a scope before creating the connector |
 | devices | `refresh-devices-view` | Refresh DevicesView |
 | devices | `set-feature-flag-ig` | Set value of a feature flag |
 | devices | `sync` | Synchronize ig-view-service from identity-graph by republishing out-of-sync devices |
 | devices | `sync-connector` | Trigger immediate workload sync for all endpoints of a connector |
 | devices | `sync-endpoint` | Trigger immediate workload sync for a specific endpoint |
 | devices | `upsert-enrichment-order` | Update/create settings entry |
+| devices | `validate-azure-connection-existing` | Validate the Azure connection of an existing endpoint, optionally with edited credentials |
+| devices | `validate-azure-connection-pre-creation` | Validate Azure connection for a new endpoint (pre-creation) |
+| devices | `validate-azure-permissions-existing` | Validate Azure permissions for an existing connector endpoint |
+| devices | `validate-azure-permissions-pre-creation` | Validate Azure permissions for a new endpoint (pre-creation) |
+| devices | `validate-azure-region-permissions-existing` | Validate an existing endpoint's region filter against its subscriptions |
+| devices | `validate-azure-region-permissions-pre-creation` | Validate a new endpoint's region filter against its subscriptions (pre-creation) |
 | devices | `validate-permissions-existing` | Validate AWS permissions for an existing connector endpoint |
 | devices | `validate-permissions-pre-creation` | Validate AWS permissions for a new endpoint (pre-creation) |
+| flows | `accept-app-flow-data` | POST /flow/api/appflowdata |
+| flows | `accept-flow-data` | POST /flow/api/flowdata |
+| flows | `accept-flows` | POST /api/flows/v1/flows |
 | flows | `flows-export` | Generate flows export as CSV |
 | flows | `get-dash-board-summary-data` | POST /nflowsearch/api/v1/dashboardSummary |
 | flows | `get-distribution-zone-sankey` | Get distribution zone sankey data |
@@ -338,6 +372,7 @@
 | policy | `clone-policy-set` | Clone Policy Set |
 | policy | `create` | Create a new label |
 | policy | `create-1` | Create new access policy security profile |
+| policy | `create-access-policy-review` | Record a completed configuration review for an Access Policy |
 | policy | `create-application` | POST /api/flows/v1/applications |
 | policy | `create-dynamic-policy-group` | Create new dynamic policy group |
 | policy | `create-dynamic-policy-groups` | Bulk create of Dynamic Policy Group |
@@ -347,6 +382,7 @@
 | policy | `create-policy` | Bulk create Policy |
 | policy | `create-policy-group-label` | Create a new policy group label. |
 | policy | `create-policy-post` | Create Policy |
+| policy | `create-policy-review` | Record a completed configuration review for a Policy |
 | policy | `create-policy-set` | Create Policy Set |
 | policy | `create-policy-view` | Create a policy view |
 | policy | `create-post` | Create a new folder (max depth 3, name globally unique per type) |
@@ -361,9 +397,13 @@
 | policy | `evaluate-policy` | Evaluate Policy |
 | policy | `evaluate-policy-export` | Evaluate Policy and export result as CSV |
 | policy | `evaluate-policy-group-for-device` | Find Policy Group, that provided Device would be classified to |
+| policy | `export-access-policy-security-profile-rules` | Generate a CSV export of one Access Policy Security Profile's rules |
+| policy | `export-access-policy-security-profiles` | Generate an Access Policy Security Profiles CSV export |
 | policy | `export-policies-to-csv` | Generate policies export as CSV |
 | policy | `export-policy-group-labels` | Export Policy Group Labels to CSV |
 | policy | `export-policy-group-to-csv` | Generate Policy Groups export as CSV |
+| policy | `export-security-profiles` | Generate a Security Profiles CSV export |
+| policy | `export-security-rules` | Generate a CSV export of one Security Profile's rules |
 | policy | `export-templates` | Export Policy Group Templates to CSV |
 | policy | `force-sync` | POST /api/policy/v1/state/resync |
 | policy | `get-devices-current-pg-and-new-pg-after-evaluation` | Get current and expected policy groups after the devices will be unlocked |
@@ -375,7 +415,6 @@
 | policy | `get-policy-groups-by-ids` | Search and filter policy groups by ids |
 | policy | `get-policy-groups-summary` | Get Policy Groups summary |
 | policy | `import-labels` | Bulk import labels from an XLSX or CSV file (max 3 MB, async) |
-| policy | `is-site-label-in-use` | Is Site Label used |
 | policy | `lookup` | Resolve a batch of label ids to metadata |
 | policy | `lookup-dynamic` | Get Assets that are expected to Match the Dynamic Policy Group |
 | policy | `lookup-dynamic-export` | Export Assets that are expected to Match the Dynamic Policy Group to CSV |
@@ -387,6 +426,11 @@
 | policy | `partial-reorder-policy-group` | Reorder (partial) policy group |
 | policy | `post-local-policy-group-site` | Save Site Label for creating Local Policy Groups |
 | policy | `preview-operation` | Preview the scope of a matrix operation (create / overwrite / delete) before running it |
+| policy | `search-access-policy-security-profile-rules` | Search, filter and page the rules of one Access Policy Security Profile |
+| policy | `search-access-policy-security-profiles` | Search, filter and page Access Policy Security Profiles |
+| policy | `search-policies-for-policy-set` | Search and filter Policies in given Policy Set: filters in the JSON body |
+| policy | `search-security-profiles` | Search, filter and page Security Profiles |
+| policy | `search-security-rules` | Search, filter and page the Security Rules of one Security Profile |
 | policy | `send-state-of-all-devices-to-identity-graph` | Send current state of all Devices to Identity Graph |
 | policy | `send-state-of-device-to-identity-graph` | Send current state of the Devices to Identity Graph |
 | policy | `validate-application` | POST /api/flows/v1/applications/validate |
@@ -440,6 +484,8 @@
 | topology | `get-virtual-edge-by-post` | Search and filter virtual edge |
 | topology | `get-virtual-edge-by-post-post` | Search and filter virtual edge group |
 | topology | `get-virtual-edge-nodes-by-post` | List Virtual Edge Nodes with pagination and sorting |
+| topology | `get-virtual-edge-nodes-metrics-summary` | Aggregated VEN counts grouped per dimension (metrics summary) |
+| topology | `get-virtual-edges-metrics-summary` | Aggregated VE counts grouped per dimension (metrics summary) |
 | topology | `heartbeat` | Register heartbeat for a VE |
 | topology | `heartbeat-post` | Register heartbeat from virtual edge node |
 | topology | `metrics` | Publish operational metrics for a VE |
@@ -465,13 +511,14 @@
 | topology | `virtual-edge-bulk-upload` | Bulk upload Virtual Edges from XLSX file |
 | topology | `virtual-edge-node-bulk-upload` | Bulk upload Virtual Edge Nodes from XLSX file |
 
-### Update operations (82 commands)
+### Update operations (83 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
 | ad | `ping` | Health check |
 | ad | `put-configuration-value` | Update configuration value |
 | ad | `set-distribution-zones` | Set distribution zones for a connector |
+| ad | `set-groups-default-enabled` | Set the 'enable all groups by default' toggle (master reset) |
 | connectors | `update` | Update a single inventory record |
 | connectors | `update-connector` | Update connector configuration by ID |
 | connectors | `update-connector-configuration` | Update connector configuration by ID |
@@ -609,10 +656,11 @@
 | topology | `force-delete-ven` | Force delete a Virtual Edge Node in decommission state |
 | topology | `use-default-logger-level` | Reset logger to default level |
 
-### Patch operations (9 commands)
+### Patch operations (10 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
+| ad | `set-groups-enabled` | Enable or disable one or many groups |
 | devices | `enrich-by-id-append` | Enrich device by ID and append to existing data in layer (create layer if not exists). |
 | devices | `enrich-by-ip-append` | Enrich device by IP and append to existing data in layer (create layer if not exists). |
 | devices | `update-device` | Partially update device by ID |
@@ -650,7 +698,7 @@ Profile and configuration management.
 
 ## API Command Groups
 
-### ad (49 commands)
+### ad (57 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -658,6 +706,7 @@ Profile and configuration management.
 | `agent-status` | Set AD Agent and DC status |
 | `delete-auth` | Delete Entra authentication and all related data |
 | `export` | Generate AD Agents export as CSV |
+| `export-groups` | Generate groups export as XLSX |
 | `export-users` | Generate users export as CSV |
 | `export-users-logon-history` | Generate users logon export as CSV |
 | `export-users-post` | Generate Entra users export as CSV |
@@ -675,6 +724,11 @@ Profile and configuration management.
 | `get-dc-bookmark` | Get DC bookmark for specific AD Agent and DC hostname |
 | `get-distribution-zone-assignments` | Get distribution zone assignments per connector |
 | `get-entra-users` | Entra users |
+| `get-group-devices` | Get devices that are direct members of a group |
+| `get-group-users` | Get users that are direct members of a group |
+| `get-groups-count` | Get groups count |
+| `get-groups-default-enabled` | Get the 'enable all groups by default' toggle |
+| `get-groups-view` | Get groups view |
 | `get-isolated-distribution-zones` | GET /api/ad-connector-service/v1/distribution-zones |
 | `get-pull-status` | Get the status of a previously-initiated log pull; on success streams the ZIP bytes |
 | `get-suppressed-ip-attaches` | Get all suppressed IP attaches |
@@ -694,6 +748,8 @@ Profile and configuration management.
 | `save-ad-agent-config` | Save new config for specific AD Agent |
 | `save-logger-change` | Save log level for specific AD Agent |
 | `set-distribution-zones` | Set distribution zones for a connector |
+| `set-groups-default-enabled` | Set the 'enable all groups by default' toggle (master reset) |
+| `set-groups-enabled` | Enable or disable one or many groups |
 | `status` | Entra status |
 | `sync` | Sync Entra |
 | `unregister-connector` | Unregister the connector |
@@ -704,7 +760,7 @@ Profile and configuration management.
 | `update-auth` | Update Entra authentication |
 | `upload-logs` | Upload agent logs |
 
-### connectors (35 commands)
+### connectors (38 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -723,12 +779,15 @@ Profile and configuration management.
 | `download-export-file` | Download generated XLSX for the export task |
 | `download-import-template` | Download sample XLSX import template for Custom Connector |
 | `export-devices` | Export devices for custom connector as XLSX |
+| `fetch-tanium-sensor-catalog` | Fetch the Tanium sensor catalog |
+| `fetch-tanium-sensor-detail` | Look up one Tanium sensor by exact name |
 | `get-custom-connector-devices` | Get devices from custom connector for given layer |
 | `get-endpoint` | Get a single endpoint |
 | `get-export-status` | Get status of ongoing or completed export task |
 | `get-status` | Get status of ongoing or completed import task |
 | `import-file` | Import XLS/XLSX file with Custom Connector data |
 | `list-endpoints` | List all endpoints for a connector |
+| `probe-tanium-sensor-mapping` | Probe a draft sensor mapping |
 | `read` | Get hierarchical connector status with per-endpoint details |
 | `read-all-connector-configurations` | Read all connector configuration entries |
 | `read-all-connectors` | Read all connector configuration entries |
@@ -744,13 +803,15 @@ Profile and configuration management.
 | `validate-endpoint-for-connector` | Validate endpoint configuration for existing connector |
 | `validate-endpoint-pre-creation` | Validate endpoint configuration before connector creation |
 
-### devices (89 commands)
+### devices (107 commands)
 
 | Command | Description |
 |---------|-------------|
 | `add-device-unique-attribute-value` | Add device attribute unique value |
 | `apply-custom-oui-mappings` | Upload custom OUI mappings and override existing ones |
 | `attach` | Attach device by MAC or create new one if not exists |
+| `attach-workload` | Attach a workload reported by a VEN, creating it if it does not exist |
+| `attach-workloads` | Attach a batch of workloads reported by a VEN |
 | `attached` | Attach devices by MAC or create new ones if not exists |
 | `bulk-create-devices` | Create new devices |
 | `bulk-create-devices-from-file` | Create new devices from XLSX file |
@@ -784,6 +845,7 @@ Profile and configuration management.
 | `execute-synchronous-on-demand-enrichment-post` | Execute a synchronous on demand enrichment of given device for all sources |
 | `export-devices` | Generate devices export |
 | `export-devices-from-view` | Export devices to CSV or XLSX |
+| `export-suppression-list` | Export entries as CSV |
 | `feature-flag-ig` | Get current status of a feature flag |
 | `generate-external-id` | Generate external ID and account ID for IAM role setup |
 | `generate-trust-policy` | Generate trust policy JSON for the customer's IAM role |
@@ -804,7 +866,6 @@ Profile and configuration management.
 | `get-permissions-policy` | Get the IAM permissions policy for ElisityCloudDiscoveryPolicy |
 | `get-raw-enrichment-order` | Read raw enrichment order settings entry |
 | `get-specification` | Read workload attribute specification |
-| `get-users` | Get all entries (paged) |
 | `get-values-for-device-attribute` | Get values for device attribute |
 | `get-workload-aggregate` | Get workload aggregated counts |
 | `get-workload-count` | Get workload count |
@@ -813,6 +874,15 @@ Profile and configuration management.
 | `list-all-custom-connector-icons-base64` | List all Custom Connector icons (base64) |
 | `list-available-regions` | List available AWS regions for an endpoint's credentials |
 | `list-available-regions-existing` | List available AWS regions for an existing connector endpoint |
+| `list-azure-regions-existing` | List Azure regions available to an existing endpoint's subscriptions |
+| `list-azure-regions-pre-creation` | List Azure regions available to a new endpoint's subscriptions (pre-creation) |
+| `list-azure-required-permissions` | List the ARM permissions the connector needs, by tier |
+| `list-azure-resource-groups-existing` | List Azure resource groups (with VM counts) for an existing endpoint |
+| `list-azure-resource-groups-pre-creation` | List Azure resource groups (with VM counts) for a new endpoint's scope |
+| `list-azure-subscriptions-existing` | List Azure subscriptions for an existing connector endpoint |
+| `list-azure-subscriptions-pre-creation` | List Azure subscriptions for a new endpoint (pre-creation) |
+| `preview-azure-scope-existing` | Preview the scope of an existing endpoint (post-creation scope edit) |
+| `preview-azure-scope-pre-creation` | Preview a scope before creating the connector |
 | `purge-device-layer` | Purge device layer |
 | `read-all-layer-instances-specification` | Read dynamic specification of all layers |
 | `read-all-settings` | Read all settings entries |
@@ -823,6 +893,7 @@ Profile and configuration management.
 | `refresh-devices-view` | Refresh DevicesView |
 | `search-by-name` | Search time-based configurations by name |
 | `search-device` | Search device by MAC |
+| `search-suppression-list` | Get all entries (paged, searchable and filterable) |
 | `set-feature-flag-ig` | Set value of a feature flag |
 | `stream-digest` | Stream device digest |
 | `sync` | Synchronize ig-view-service from identity-graph by republishing out-of-sync devices |
@@ -835,13 +906,22 @@ Profile and configuration management.
 | `update-workload` | Update workload STATIC attributes |
 | `update-workload-interface` | Update STATIC layer of a workload interface |
 | `upsert-enrichment-order` | Update/create settings entry |
+| `validate-azure-connection-existing` | Validate the Azure connection of an existing endpoint, optionally with edited credentials |
+| `validate-azure-connection-pre-creation` | Validate Azure connection for a new endpoint (pre-creation) |
+| `validate-azure-permissions-existing` | Validate Azure permissions for an existing connector endpoint |
+| `validate-azure-permissions-pre-creation` | Validate Azure permissions for a new endpoint (pre-creation) |
+| `validate-azure-region-permissions-existing` | Validate an existing endpoint's region filter against its subscriptions |
+| `validate-azure-region-permissions-pre-creation` | Validate a new endpoint's region filter against its subscriptions (pre-creation) |
 | `validate-permissions-existing` | Validate AWS permissions for an existing connector endpoint |
 | `validate-permissions-pre-creation` | Validate AWS permissions for a new endpoint (pre-creation) |
 
-### flows (15 commands)
+### flows (18 commands)
 
 | Command | Description |
 |---------|-------------|
+| `accept-app-flow-data` | POST /flow/api/appflowdata |
+| `accept-flow-data` | POST /flow/api/flowdata |
+| `accept-flows` | POST /api/flows/v1/flows |
 | `flows-export` | Generate flows export as CSV |
 | `get-available-ports` | Get all available ports and their names |
 | `get-capabilities` | Get analytics capabilities |
@@ -894,7 +974,7 @@ Profile and configuration management.
 | `update-suggestion` | Update Suggestion |
 | `update-suggestion-put` | Update Network Policy Suggestion |
 
-### policy (181 commands)
+### policy (191 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -911,6 +991,7 @@ Profile and configuration management.
 | `colors` | Allowed label colours (single source of truth for UI palette + XLSX legend) |
 | `create` | Create a new label |
 | `create-1` | Create new access policy security profile |
+| `create-access-policy-review` | Record a completed configuration review for an Access Policy |
 | `create-application` | POST /api/flows/v1/applications |
 | `create-dynamic-policy-group` | Create new dynamic policy group |
 | `create-dynamic-policy-groups` | Bulk create of Dynamic Policy Group |
@@ -920,6 +1001,7 @@ Profile and configuration management.
 | `create-policy` | Bulk create Policy |
 | `create-policy-group-label` | Create a new policy group label. |
 | `create-policy-post` | Create Policy |
+| `create-policy-review` | Record a completed configuration review for a Policy |
 | `create-policy-set` | Create Policy Set |
 | `create-policy-view` | Create a policy view |
 | `create-post` | Create a new folder (max depth 3, name globally unique per type) |
@@ -953,10 +1035,14 @@ Profile and configuration management.
 | `evaluate-policy` | Evaluate Policy |
 | `evaluate-policy-export` | Evaluate Policy and export result as CSV |
 | `evaluate-policy-group-for-device` | Find Policy Group, that provided Device would be classified to |
+| `export-access-policy-security-profile-rules` | Generate a CSV export of one Access Policy Security Profile's rules |
+| `export-access-policy-security-profiles` | Generate an Access Policy Security Profiles CSV export |
 | `export-csv` | GET /api/flows/v1/applications/export |
 | `export-policies-to-csv` | Generate policies export as CSV |
 | `export-policy-group-labels` | Export Policy Group Labels to CSV |
 | `export-policy-group-to-csv` | Generate Policy Groups export as CSV |
+| `export-security-profiles` | Generate a Security Profiles CSV export |
+| `export-security-rules` | Generate a CSV export of one Security Profile's rules |
 | `export-templates` | Export Policy Group Templates to CSV |
 | `force-sync` | POST /api/policy/v1/state/resync |
 | `get-access-policies` | List access policies on a policy set (the Access Policy column) |
@@ -1018,7 +1104,6 @@ Profile and configuration management.
 | `get-vendor` | Get a vendor |
 | `impact` | List devices currently assigned this label (impact analysis before delete) |
 | `import-labels` | Bulk import labels from an XLSX or CSV file (max 3 MB, async) |
-| `is-site-label-in-use` | Is Site Label used |
 | `list` | List labels (paged), with optional folder filter and free-text search on name+description |
 | `list-applications` | GET /api/flows/v1/applications |
 | `list-get` | List folders for a type with cumulative label counts (folder + descendants) |
@@ -1045,6 +1130,11 @@ Profile and configuration management.
 | `remove-definition` | DELETE /api/flows/v1/applications/{id}/definitions/{defId} |
 | `rename` | Rename a folder |
 | `reorder-siblings` | Reorder a dynamic policy group among its siblings |
+| `search-access-policy-security-profile-rules` | Search, filter and page the rules of one Access Policy Security Profile |
+| `search-access-policy-security-profiles` | Search, filter and page Access Policy Security Profiles |
+| `search-policies-for-policy-set` | Search and filter Policies in given Policy Set: filters in the JSON body |
+| `search-security-profiles` | Search, filter and page Security Profiles |
+| `search-security-rules` | Search, filter and page the Security Rules of one Security Profile |
 | `search-templates` | Search and filter Policy Group Templates |
 | `send-state-of-all-devices-to-identity-graph` | Send current state of all Devices to Identity Graph |
 | `send-state-of-device-to-identity-graph` | Send current state of the Devices to Identity Graph |
@@ -1080,7 +1170,7 @@ Profile and configuration management.
 | `validate-subnet-static-policy-group` | Validate subnet for Static Policy Group |
 | `validate-subnet-static-policy-group-post` | Bulk validate subnet for Static Policy Group |
 
-### system (29 commands)
+### system (31 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -1107,14 +1197,16 @@ Profile and configuration management.
 | `replace-tenant-default` | Replace tenant-wide disabled task types |
 | `resume-snapshot-schedule` | Resume snapshot schedule |
 | `retrieve-snapshot` | Get snapshot by ID |
-| `retrieve-snapshot-image` | Get snapshot PDF |
+| `retrieve-snapshot-evidence` | Get snapshot evidence package |
+| `retrieve-snapshot-markdown` | Get snapshot Markdown |
+| `retrieve-snapshot-pdf` | Get snapshot PDF |
 | `retrieve-snapshot-schedule` | Get snapshot schedule by ID |
 | `search-snapshot-schedules` | Search snapshot schedules |
 | `search-snapshots` | Search snapshots |
 | `update-snapshot-schedule` | Update snapshot schedule |
 | `update-task` | Update task |
 
-### topology (154 commands)
+### topology (158 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -1221,9 +1313,13 @@ Profile and configuration management.
 | `get-virtual-edge-nodes` | List Virtual Edge Nodes with pagination and sorting |
 | `get-virtual-edge-nodes-by-post` | List Virtual Edge Nodes with pagination and sorting |
 | `get-virtual-edge-nodes-for-distribution-zone` | Get all Virtual Edge Nodes for a Distribution Zone |
+| `get-virtual-edge-nodes-metrics-summary` | Aggregated VEN counts grouped per dimension (metrics summary) |
+| `get-virtual-edges-metrics-summary` | Aggregated VE counts grouped per dimension (metrics summary) |
+| `get-workload-distribution-zone-usage` | Report whether a Workload Distribution Zone is referenced by any workload-discovery connector endpoint |
 | `heartbeat` | Register heartbeat for a VE |
 | `heartbeat-post` | Register heartbeat from virtual edge node |
 | `is-imbalanced` | Check if Virtual Edge Group is imbalanced |
+| `list-workload-distribution-zones` | List Workload Distribution Zones known to Identity Graph |
 | `metrics` | Publish operational metrics for a VE |
 | `metrics-post` | Publish operational metrics for a VEN |
 | `patch-virtual-edge-group` | Partial-update of a virtual edge group |

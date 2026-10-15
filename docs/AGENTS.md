@@ -156,7 +156,7 @@ When a human asks for something using a phrase you don't immediately recognise:
    Do not act on a guess for non-trivial operations.
 
 4. **Never paraphrase a UI feature into a plausible-but-fake CLI command.**
-   The CLI has 613 commands; if a verb you imagine isn't in `--help`, it
+   The CLI has 658 commands; if a verb you imagine isn't in `--help`, it
    doesn't exist. The honesty rule is non-negotiable — fabricated commands
    waste human review cycles and damage trust.
 
@@ -266,8 +266,11 @@ command name:
   (`topology decommission-virtual-edge-node`), and the Insights
   reset/recreate commands, whose own CCC summary is "Delete and Create all
   suggestions".
+- One operation whose path names no action but which resets state:
+  `ad set-groups-default-enabled` (CCC 26.9; the spec calls it a "master reset").
+  It is listed by (method, path) in `DESTRUCTIVE_OPERATIONS`.
 
-67 destructive commands, 67 gated. `python3 tools/audit_counts.py` recomputes
+68 destructive commands, 68 gated. `python3 tools/audit_counts.py` recomputes
 that from the shipped source and fails the build if it slips.
 
 **Two things this does NOT cover, so do not read `--confirm` as the whole
@@ -346,7 +349,10 @@ gate: report the exact command to the human, get explicit go/no-go, then run.
   counterparts) — maintenance mode changes enforcement behaviour on live
   infrastructure
 - `set-*` — `set-feature-flag-ig`, `set-logger-levels-bulk`,
-  `set-distribution-zones`
+  `set-distribution-zones`, and the CCC 26.9 AD group toggles
+  `ad set-groups-enabled` and `ad set-groups-default-enabled` (the latter is
+  described in the spec as a "master reset" of the enable-all-groups default,
+  and requires `--confirm`)
 - `activate-workflow`, `recreate-policy-suggestions`,
   `reset-suggestions-to-default` — the recreate/reset pair discards the existing
   suggestion set ("Delete and Create all suggestions"), so both require
@@ -358,6 +364,15 @@ gate: report the exact command to the human, get explicit go/no-go, then run.
 - `restart` (restarts an AD connector), `pull-logs`, `save-activity-logs`
 - `pause-snapshot-schedule`, `resume-snapshot-schedule`
 - `generate-external-id` — mints and persists an AWS external ID / account ID
+- `create-access-policy-review`, `create-policy-review` — write an audit-trail
+  record ("configuration review completed"); the policy itself is not modified
+- **Data-plane ingestion — never run on your own initiative.** `devices attach-workload`,
+  `devices attach-workloads`, `flows accept-flows`, `flows accept-flow-data` and
+  `flows accept-app-flow-data` are the calls a VE/VEN makes to report workloads and
+  flows. Run manually they write synthetic data into the tenant, and
+  `attach-workload` *replaces* the workload's stored interface list (interfaces
+  missing from the body are deleted). The same goes for the older device
+  `attach` / `attached`. If a human asks for one, confirm they mean it
 
 A safe rule of thumb: if a command in the glossary mapping starts with anything
 other than `get-`, `list-`, `read-`, `search-`, `count-`, or `export-`, get
@@ -389,12 +404,14 @@ spec:
 | `insights *-preview` (`day0`/`day7`/`day15`/`day30`/`all-workflows`, `post-policy-group-suggestions-preview`) | Preview a workflow or suggestion set without applying it |
 | `flows traffic-record-export`, `flows flows-export` | Export traffic records / flow data as CSV |
 | `devices generate-trust-policy` | Render the IAM trust-policy JSON for the operator to apply in AWS |
+| `devices validate-azure-*`, `devices preview-azure-scope-*` | Azure workload discovery: test a connection / permissions / region filter, or preview the subscriptions and VM count a scope resolves to. The spec states nothing is persisted |
+| `connectors fetch-tanium-sensor-catalog`, `fetch-tanium-sensor-detail`, `probe-tanium-sensor-mapping` | Live reads from Tanium; the probe "never affects connector health" per the spec |
 
 Anything not in this table gets the rule of thumb. When a new command appears
 and you cannot tell, treat it as destructive and ask.
 
-**The direction that matters holds, and is tested.** Of the 375 state-changing-by-verb
-commands, 39 are classified safe by the prefix rule above, and every one of them is
+**The direction that matters holds, and is tested.** Of the 416 state-changing-by-verb
+commands, 61 are classified safe by the prefix rule above, and every one of them is
 genuinely a read — no destructive command is misclassified as safe
 (`tests/test_command_invariants.py::TestConfirmGate::test_the_safe_prefix_rule_never_clears_a_destructive_command`).
 The table is an allowlist and is deliberately incomplete in the other direction:
