@@ -123,7 +123,7 @@ def _emitted_names(entry: dict) -> dict:
     method = entry.get("method", "GET")
     path = entry.get("path", "")
 
-    path_params, query_params = [], []
+    path_params, query_params, header_params = [], [], []
     for spec in parameters.values():
         if spec.get("in") == "path":
             path_params.append((spec["name"], spec.get("type") or "str", ""))
@@ -132,11 +132,13 @@ def _emitted_names(entry: dict) -> dict:
                 spec["name"], spec.get("type") or "str",
                 bool(spec.get("required")), "", None,
             ))
+        elif spec.get("in") == "header" and spec.get("required"):
+            header_params.append((spec["name"], spec.get("type") or "str", True, "", None))
 
     names = {}
-    if path_params or query_params:
+    if path_params or query_params or header_params:
         resolved_path, resolved_query = resolve_parameter_names(
-            method, path_params, query_params, path
+            method, path_params, query_params, path, header_params
         )
         for spec in resolved_path:
             names[spec["spec_name"]] = spec["dest"].upper()

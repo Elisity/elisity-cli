@@ -2,6 +2,9 @@
 
 1. `Accept: application/json` on every request: the server answers the 26.9
    operations whose only 2xx is text/plain with 406.
+2. Required header parameters were dropped by the generator: the state-sync
+   task calls (X-Elisity-VE) and policy-group sibling-order (If-Match) could
+   not be made.
 3. A failed call printed only `400 Client Error: ... for url: ...`; the
    server's own message never reached the user.
 """
@@ -75,6 +78,47 @@ def test_text_plain_only_operation_succeeds(fake, method, path, argv, body):
     assert result.exit_code == 0, result.output
     assert body in result.stdout
     assert _api_calls(rsps)[0].headers["Accept"].startswith("application/json")
+
+
+# --- 2. Required header parameters -------------------------------------------
+
+HEADER_OPS = [
+    ("GET", "/api/state-sync/v1/tasks/next", ["system", "get-next-task-for-ve"],
+     "--x-elisity-ve", "X-Elisity-VE"),
+    ("PUT", "/api/state-sync/v1/tasks/t-1/release", ["system", "release-execution-of-task", "t-1"],
+     "--x-elisity-ve", "X-Elisity-VE"),
+    ("PUT", "/api/state-sync/v1/tasks/t-1/ack", ["system", "ack-execution-of-task", "t-1"],
+     "--x-elisity-ve", "X-Elisity-VE"),
+    ("POST", "/api/state-sync/v1/tasks/t-1/ack", ["system", "ack-execution-of-task-post", "t-1"],
+     "--x-elisity-ve", "X-Elisity-VE"),
+    ("PUT", "/api/policy/v2/policy-groups/dynamic/g-1/sibling-order",
+     ["policy", "reorder-siblings", "g-1"], "--if-match", "If-Match"),
+]
+
+
+@pytest.mark.parametrize("method, path, argv, flag, header", HEADER_OPS,
+                         ids=[op[2][1] for op in HEADER_OPS])
+class TestRequiredHeader:
+    def test_value_is_sent_as_the_header(self, fake, method, path, argv, flag, header):
+        rsps, run = fake
+        rsps.add(method, re.compile(re.escape(BASE_URL + path) + r"(\?.*)?$"), json={})
+
+        result = run(argv + [flag, "ve-42"])
+
+        assert result.exit_code == 0, result.output
+        sent = _api_calls(rsps)
+        assert len(sent) == 1
+        assert sent[0].headers[header] == "ve-42"
+
+    def test_omitting_it_is_a_usage_error_with_no_http_call(self, fake, method, path, argv,
+                                                          flag, header):
+        rsps, run = fake
+
+        result = run(argv)
+
+        assert result.exit_code == 2
+        assert f"Missing option '{flag}'" in result.output
+        assert len(rsps.calls) == 0
 
 
 # --- 3. Server message on errors ---------------------------------------------
