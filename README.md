@@ -367,6 +367,14 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 - **Why.** The 26.9 spec declares these three POSTs with no request body, so without a fix the CLI sent none, and the server rejects a bodiless POST: on a 26.9.0 tenant, `POST /api/ad-connector-service/v1/groups?size=5` returned 400 with no body and 200 with `{}` (2026-10-15).
 - **Where the body comes from.** [`spec-overlays/ccc-26.9-ad-group-views-body.json`](spec-overlays/ccc-26.9-ad-group-views-body.json) patches the three operations (see [Spec overlays](#spec-overlays)). No other command sends a body you did not give; the other bodiless POST/PUT operations in 26.9 are actions and stay bodiless.
 
+### Client fixes from the 26.9 live sweep
+
+A sweep of every read command against a 26.9.0 tenant (2026-10-15) found three client defects. All three predate 26.9.
+
+- **Commands whose server answers only `text/plain` work.** The client sent `Accept: application/json` on every request, and the server answered the 15 operations whose only success response is `text/plain` with `406 Not Acceptable` (for example `policy create` and `devices check-ven-availability`). The default is now `Accept: application/json, text/plain;q=0.9, */*;q=0.8`. A `text/plain` body is printed as before for non-JSON responses: `{"raw": "..."}` for a GET, the text itself for POST and PUT.
+- **Required header parameters are options.** `system get-next-task-for-ve`, `system release-execution-of-task`, `system ack-execution-of-task` and `system ack-execution-of-task-post` take `--x-elisity-ve` (sent as `X-Elisity-VE`), and `policy reorder-siblings` takes `--if-match` (sent as `If-Match`). All five are required, as in the spec; leaving one out is a usage error (exit 2) and nothing is sent. Optional header parameters (`If-Match` / `If-None-Match` on about 50 operations) are not exposed yet.
+- **Errors show the server's message.** A 4xx or 5xx now prints the status line followed by what the server said, for example `Error: 400 Client Error: Bad Request for url: ... — server message: Firewall rules can only be managed for Palo Alto vendors.` The message comes from the JSON `message`, else the `errors[].message` values, else `error`, else the first 300 characters of the body; an empty body adds nothing. Exit codes are unchanged.
+
 ### Removed commands (breaking)
 
 This command is gone because the operation was removed from the CCC spec. Any script invoking one will now fail with `No such command`. Commands whose underlying *path* moved are not listed here — they still exist, and are under [Changed command signatures](#changed-command-signatures).
