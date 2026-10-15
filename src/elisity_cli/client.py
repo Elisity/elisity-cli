@@ -4,6 +4,7 @@ Unified CCC API client with OAuth2 auth, retry, pagination, and NDJSON support.
 
 import json
 import logging
+import re
 import time
 from typing import Any, Dict, Iterator, List, Optional
 from urllib.parse import urljoin
@@ -17,6 +18,41 @@ from tenacity import (
 )
 
 logger = logging.getLogger(__name__)
+
+# JSON first, but admit text/plain: CCC 26.9 has operations whose only 2xx
+# representation is text/plain (identity-graph label/device/folder create,
+# check-ven-availability, ...) and Spring answers `Accept: application/json`
+# on those with 406 before the handler runs.
+DEFAULT_ACCEPT = "application/json, text/plain;q=0.9, */*;q=0.8"
+
+
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def server_error_message(resp: requests.Response, secret: Optional[str] = None) -> str:
+    """The server's own explanation of a 4xx/5xx, or "" if the body is empty.
+
+    Spring puts it in `message`, validation errors in `errors[].message`, and a
+    bare error page only has `error`; anything else is the body text. Always one
+    line of at most 300 characters with no terminal control characters, and
+    `secret` (the bearer token) masked in case the server echoes it.
+    """
+    text = (resp.text or "").strip()
+    try:
+        body = resp.json() if text else None
+    except ValueError:
+        body = None
+    if isinstance(body, dict):
+        errors = body.get("errors") if isinstance(body.get("errors"), list) else []
+        joined = "; ".join(str(e.get("message") if isinstance(e, dict) else e).strip()
+                           for e in errors if e and (not isinstance(e, dict) or e.get("message")))
+        for candidate in (body.get("message"), joined, body.get("error")):
+            if isinstance(candidate, str) and candidate.strip():
+                text = candidate
+                break
+    if secret:
+        text = text.replace(secret, "***")
+    return _CONTROL_CHARS.sub("", " ".join(text.split()))[:300]
 
 
 class CCCClient:
@@ -39,7 +75,7 @@ class CCCClient:
         self.session = requests.Session()
         self.session.verify = verify_ssl
         self.session.headers.update(
-            {"Content-Type": "application/json", "Accept": "application/json"}
+            {"Content-Type": "application/json", "Accept": DEFAULT_ACCEPT}
         )
 
     def authenticate(self) -> bool:
@@ -125,6 +161,23 @@ class CCCClient:
             )
         return resp
 
+    def _raise_for_status(self, resp: requests.Response) -> None:
+        """raise_for_status(), with the server's message appended.
+
+        Same exception type and status line as requests, so callers and exit
+        codes are unchanged; only the text gains what the server said. Built
+        from the response body only, never from request headers.
+        """
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            detail = server_error_message(resp, self.access_token)
+            if not detail:
+                raise
+            raise requests.exceptions.HTTPError(
+                f"{e} — server message: {detail}", request=e.request, response=resp
+            ) from None
+
     def request_raw(
         self,
         method: str,
@@ -135,12 +188,13 @@ class CCCClient:
     ) -> requests.Response:
         """Make a raw request and return the Response object."""
         resp = self._request(method, endpoint, data=data, params=params, headers=headers)
-        resp.raise_for_status()
+        self._raise_for_status(resp)
         return resp
 
-    def get(self, endpoint: str, params: Optional[Dict] = None) -> Any:
-        resp = self._request("GET", endpoint, params=params)
-        resp.raise_for_status()
+    def get(self, endpoint: str, params: Optional[Dict] = None,
+            headers: Optional[Dict] = None) -> Any:
+        resp = self._request("GET", endpoint, params=params, headers=headers)
+        self._raise_for_status(resp)
         if not resp.text or not resp.text.strip():
             return {}
         try:
@@ -152,14 +206,16 @@ class CCCClient:
             logger.warning("Non-JSON 200 from %s; returning raw text", endpoint)
             return {"raw": resp.text}
 
-    def get_ndjson(self, endpoint: str, params: Optional[Dict] = None) -> List[dict]:
+    def get_ndjson(self, endpoint: str, params: Optional[Dict] = None,
+                   headers: Optional[Dict] = None) -> List[dict]:
         """GET for endpoints that may return NDJSON."""
         self._ensure_auth()
         url = urljoin(self.base_url + "/", endpoint.lstrip("/"))
         resp = self.session.get(
-            url, params=params, headers={"Accept": "*/*"}, timeout=self.timeout
+            url, params=params, headers={"Accept": "*/*", **(headers or {})},
+            timeout=self.timeout,
         )
-        resp.raise_for_status()
+        self._raise_for_status(resp)
         if not resp.text:
             return []
         ct = resp.headers.get("content-type", "")
@@ -175,9 +231,10 @@ class CCCClient:
         except ValueError:
             return [json.loads(line) for line in resp.text.strip().split("\n") if line.strip()]
 
-    def post(self, endpoint: str, data: Any = None, params: Optional[Dict] = None) -> Any:
-        resp = self._request("POST", endpoint, data=data, params=params)
-        resp.raise_for_status()
+    def post(self, endpoint: str, data: Any = None, params: Optional[Dict] = None,
+             headers: Optional[Dict] = None) -> Any:
+        resp = self._request("POST", endpoint, data=data, params=params, headers=headers)
+        self._raise_for_status(resp)
         if not resp.text:
             return {}
         try:
@@ -185,9 +242,10 @@ class CCCClient:
         except ValueError:
             return resp.text.strip().strip('"')
 
-    def put(self, endpoint: str, data: Any = None, params: Optional[Dict] = None) -> Any:
-        resp = self._request("PUT", endpoint, data=data, params=params)
-        resp.raise_for_status()
+    def put(self, endpoint: str, data: Any = None, params: Optional[Dict] = None,
+            headers: Optional[Dict] = None) -> Any:
+        resp = self._request("PUT", endpoint, data=data, params=params, headers=headers)
+        self._raise_for_status(resp)
         if not resp.text:
             return {}
         try:
@@ -195,16 +253,18 @@ class CCCClient:
         except ValueError:
             return resp.text.strip()
 
-    def patch(self, endpoint: str, data: Any = None, params: Optional[Dict] = None) -> Any:
-        resp = self._request("PATCH", endpoint, data=data, params=params)
-        resp.raise_for_status()
+    def patch(self, endpoint: str, data: Any = None, params: Optional[Dict] = None,
+              headers: Optional[Dict] = None) -> Any:
+        resp = self._request("PATCH", endpoint, data=data, params=params, headers=headers)
+        self._raise_for_status(resp)
         if not resp.text:
             return {}
         return resp.json()
 
-    def delete(self, endpoint: str, params: Optional[Dict] = None, data: Any = None) -> Any:
-        resp = self._request("DELETE", endpoint, data=data, params=params)
-        resp.raise_for_status()
+    def delete(self, endpoint: str, params: Optional[Dict] = None, data: Any = None,
+               headers: Optional[Dict] = None) -> Any:
+        resp = self._request("DELETE", endpoint, data=data, params=params, headers=headers)
+        self._raise_for_status(resp)
         if not resp.text:
             return {}
         try:
