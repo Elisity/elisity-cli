@@ -980,6 +980,9 @@ DATA_DIR = REPO_ROOT / "tests" / "data"
 SKELETON_267 = DATA_DIR / "ccc-26.7-operations.json"
 SKELETON_269 = DATA_DIR / "ccc-26.9-operations.json"
 OVERLAY_269 = REPO_ROOT / "spec-overlays" / "ccc-26.9-hotpatch-device-patch.json"
+OVERLAY_269_AD = REPO_ROOT / "spec-overlays" / "ccc-26.9-ad-group-views-body.json"
+# Every overlay the committed tree is generated with, in the order the README gives.
+OVERLAYS_269 = [OVERLAY_269, OVERLAY_269_AD]
 
 
 def _emitted_names(spec):
@@ -1011,10 +1014,10 @@ def _naming_spec(full_path, skeleton_path):
 
 
 def _spec_269():
-    """What the committed tree is generated from: 26.9 + the hot-patch overlay."""
+    """What the committed tree is generated from: 26.9 + its overlays."""
     from generate_commands import apply_overlays
 
-    spec, _notes = apply_overlays(_naming_spec(SPEC_269, SKELETON_269), [OVERLAY_269])
+    spec, _notes = apply_overlays(_naming_spec(SPEC_269, SKELETON_269), OVERLAYS_269)
     return spec
 
 
@@ -1183,8 +1186,8 @@ class TestSpecSkeletons:
         """Naming reads nothing the skeleton dropped."""
         from generate_commands import apply_overlays
 
-        full, _ = apply_overlays(_require(SPEC_269), [OVERLAY_269])
-        skel, _ = apply_overlays(json.loads(SKELETON_269.read_text()), [OVERLAY_269])
+        full, _ = apply_overlays(_require(SPEC_269), OVERLAYS_269)
+        skel, _ = apply_overlays(json.loads(SKELETON_269.read_text()), OVERLAYS_269)
         assert _emitted_names(full) == _emitted_names(skel)
 
 
@@ -1209,7 +1212,8 @@ class TestCommittedTreeMatchesTheSpec:
         import generate_commands as gen
 
         _require(SPEC_269)
-        assert gen.main(["--spec", str(SPEC_269), "--overlay", str(OVERLAY_269),
+        overlay_args = [arg for o in OVERLAYS_269 for arg in ("--overlay", str(o))]
+        assert gen.main(["--spec", str(SPEC_269), *overlay_args,
                          "--output-dir", str(tmp_path)]) == 0
         generated = {p.name for p in tmp_path.glob("*.py")}
         for name in sorted(generated):

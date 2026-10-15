@@ -12,7 +12,8 @@ Spec resolution (first match wins):
 Usage:
     python3 generate_commands.py --spec ./api-docs-26.7.json
     python3 generate_commands.py --spec ./api-docs-26.9.json \
-        --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json
+        --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json \
+        --overlay spec-overlays/ccc-26.9-ad-group-views-body.json
     ELISITY_API_SPEC=./api-docs-26.7.json python3 generate_commands.py
 """
 
@@ -57,6 +58,11 @@ OMITTED_OPERATIONS = {("put", DEVICE_PATH): ("patch", DEVICE_PATH)}
 # declare yet. Each is checked in with its provenance and applied with
 # `--overlay`; see apply_overlays().
 SPEC_OVERLAY_DIR = Path(__file__).parent / "spec-overlays"
+
+# The JSON body a command sends when the user passes neither --body nor
+# --body-file. Only overlays set it: the 26.9 spec declares the AD group views
+# bodiless, and the server answers a POST without a body with 400.
+DEFAULT_BODY_KEY = "x-elisity-default-body"
 
 # Map OpenAPI tags to CLI command group names
 #
@@ -704,6 +710,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     path_params, query_params = extract_params(op)
     path_params = merge_path_templates(path, path_params)
     has_body = has_request_body(op)
+    has_default_body = DEFAULT_BODY_KEY in op
+    if has_default_body and not has_body:
+        raise ValueError(f"{DEFAULT_BODY_KEY} needs a requestBody to default")
     is_ndjson = produces_ndjson(op)
     raw_summary = op.get("summary", op.get("description", "")) or f"{method.upper()} {path}"
     summary = raw_summary.split("\n")[0].replace('"', '\\"').replace("\\", "\\\\")[:120]
@@ -744,7 +753,11 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
             lines.append(f'@click.option("{q["flag"]}", "{q["dest"]}", type={click_type}, default={default_str}, help="{help_str}")')
 
     # Request body as --data JSON option
-    if has_body:
+    if has_default_body:
+        default_json = json.dumps(op[DEFAULT_BODY_KEY]).replace('"', '\\"')
+        lines.append(f'@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string (default: {default_json})")')
+        lines.append('@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")')
+    elif has_body:
         lines.append('@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")')
         lines.append('@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")')
 
@@ -800,7 +813,7 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
 
     # Handle request body
     if has_body:
-        lines.append("    body = None")
+        lines.append(f"    body = {op[DEFAULT_BODY_KEY]!r}" if has_default_body else "    body = None")
         lines.append("    if body_file:")
         lines.append("        import json as _json")
         lines.append("        with open(body_file) as f:")
@@ -1142,24 +1155,62 @@ def load_overlay(overlay_path) -> dict:
     if not overlay.get("provenance") or not isinstance(overlay.get("operations"), list):
         raise SystemExit(f"ERROR: {overlay_path} needs a 'provenance' and an 'operations' list")
     for i, entry in enumerate(overlay["operations"]):
-        missing = [k for k in ("path", "method", "cloneFrom") if not entry.get(k)]
+        missing = [k for k in ("path", "method") if not entry.get(k)]
+        if not entry.get("cloneFrom") and not entry.get("patch"):
+            missing.append("cloneFrom or patch")
         if missing:
             raise SystemExit(f"ERROR: {overlay_path} operation #{i} is missing {', '.join(missing)}")
+        if entry.get("cloneFrom") and entry.get("patch"):
+            raise SystemExit(f"ERROR: {overlay_path} operation #{i} has both cloneFrom and patch; "
+                             "use cloneFrom to add an operation, patch to change one")
+        if entry.get("patch") and not isinstance(entry["patch"], dict):
+            raise SystemExit(f"ERROR: {overlay_path} operation #{i} patch must be an object")
     return overlay
 
 
+def _patch_operation(ops: dict, path: str, method: str, patch: dict,
+                     provenance: str, overlay_path) -> list:
+    """Fill the keys of `patch` that the operation leaves empty; return notes."""
+    name = Path(overlay_path).name
+    if method not in ops:
+        raise SystemExit(
+            f"ERROR: overlay {overlay_path} patches {method.upper()} {path}, "
+            "which this spec does not declare. The overlay does not fit this spec."
+        )
+    op = ops[method]
+    notes = []
+    filled = []
+    for key, value in patch.items():
+        if op.get(key) is not None:
+            notes.append(f"overlay {name}: {method.upper()} {path} already declares "
+                         f"{key}; the spec's definition is used")
+            continue
+        op[key] = copy.deepcopy(value)
+        filled.append(key)
+    if filled:
+        op["x-elisity-overlay"] = provenance
+        notes.append(f"overlay {name}: set {', '.join(filled)} on {method.upper()} {path} "
+                     f"({provenance})")
+    return notes
+
+
 def apply_overlays(spec: dict, overlay_paths) -> tuple:
-    """Return (spec with the overlays' operations added, notes).
+    """Return (spec with the overlays applied, notes).
 
-    Each overlay operation is `{"path", "method", "cloneFrom", "set"}`: the
-    operation `cloneFrom` at the same path is copied, `set` replaces top-level
-    keys of the copy, and the result is added as `method`. The copy carries
-    `x-elisity-overlay` with the overlay's provenance. The input spec is not
-    modified.
+    An overlay operation either adds an operation or patches one:
 
-    An operation the spec already declares is left alone: the published spec
-    has caught up and wins over the overlay. An overlay whose `cloneFrom`
-    operation is missing fails generation — it no longer fits the spec.
+    - `{"path", "method", "cloneFrom", "set"}` adds: the operation `cloneFrom`
+      at the same path is copied, `set` replaces top-level keys of the copy,
+      and the result is added as `method`. An operation the spec already
+      declares is left alone: the published spec has caught up and wins.
+    - `{"path", "method", "patch"}` changes an existing operation: each key in
+      `patch` is set only where the spec leaves it empty (missing or null). A
+      key the spec already defines keeps the spec's value, with a note.
+
+    Changed or added operations carry `x-elisity-overlay` with the overlay's
+    provenance. An entry whose target (`cloneFrom`, or the patched operation)
+    is missing fails generation — it no longer fits the spec. The input spec
+    is not modified.
     """
     if not overlay_paths:
         return spec, []
@@ -1170,8 +1221,12 @@ def apply_overlays(spec: dict, overlay_paths) -> tuple:
         overlay = load_overlay(overlay_path)
         for entry in overlay["operations"]:
             path, method = entry["path"], entry["method"].lower()
-            source = entry["cloneFrom"].lower()
             ops = paths.get(path) or {}
+            if entry.get("patch"):
+                notes.extend(_patch_operation(ops, path, method, entry["patch"],
+                                              overlay["provenance"], overlay_path))
+                continue
+            source = entry["cloneFrom"].lower()
             if method in ops:
                 notes.append(f"overlay {Path(overlay_path).name}: {method.upper()} {path} "
                              "is already in the spec; the spec's definition is used")
@@ -1240,7 +1295,8 @@ def main(argv=None):
         default=[],
         metavar="PATH",
         help="Spec overlay to apply before generating (repeatable). CCC 26.9 needs "
-             f"{SPEC_OVERLAY_DIR.name}/ccc-26.9-hotpatch-device-patch.json",
+             f"{SPEC_OVERLAY_DIR.name}/ccc-26.9-hotpatch-device-patch.json and "
+             f"{SPEC_OVERLAY_DIR.name}/ccc-26.9-ad-group-views-body.json",
     )
     parser.add_argument(
         "--output-dir",

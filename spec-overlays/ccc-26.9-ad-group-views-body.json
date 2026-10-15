@@ -1,0 +1,57 @@
+{
+  "provenance": "26.9 spec declares no body; server requires one; live 400 vs 200, 2026-10-15",
+  "about": "The CCC 26.9 spec declares the three AD group views (getGroupsView, getGroupUsers, getGroupDevices) as POSTs with requestBody: null, so the generator would give them no --body and send nothing. The server rejects a bodiless POST: on release-demos.idp02 (CCC 26.9.0), POST /api/ad-connector-service/v1/groups?size=5 with no body returned HTTP 400, and with body {} and Content-Type: application/json returned HTTP 200 (an empty Spring page). This overlay gives each view an optional application/json object body and makes the command send {} when the user passes neither --body nor --body-file. Apply with: python3 generate_commands.py --spec <26.9 spec> --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json --overlay spec-overlays/ccc-26.9-ad-group-views-body.json. Each key is set only where the spec leaves it empty, so a spec that declares a requestBody keeps its own. Remove this file once the published spec declares the bodies.",
+  "operations": [
+    {
+      "path": "/api/ad-connector-service/v1/groups",
+      "method": "post",
+      "patch": {
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "x-elisity-default-body": {}
+      }
+    },
+    {
+      "path": "/api/ad-connector-service/v1/groups/{id}/users",
+      "method": "post",
+      "patch": {
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "x-elisity-default-body": {}
+      }
+    },
+    {
+      "path": "/api/ad-connector-service/v1/groups/{id}/devices",
+      "method": "post",
+      "patch": {
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "x-elisity-default-body": {}
+      }
+    }
+  ]
+}

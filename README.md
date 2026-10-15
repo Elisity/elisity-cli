@@ -4,7 +4,7 @@
 
 Command-line interface to the Elisity Cloud Control Center (CCC) API. Provides complete coverage of the CCC API surface — all 631 REST endpoints from the OpenAPI spec, plus 17 hand-coded GraphQL commands for the `/api/reporting/v1/data` endpoint (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors) that the OpenAPI spec doesn't include, plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
 
-Generated from the **CCC 26.9 (hot-patched)** OpenAPI spec: the published 26.9 spec plus a checked-in overlay for the device PATCH that 26.9 tenants are hot-patched to serve, so `devices update-device` sends **PATCH**. See [What changed in CCC 26.9](#what-changed-in-ccc-269) for the command-level delta, and [What changed in CCC 26.7](#what-changed-in-ccc-267) for the release before it.
+Generated from the **CCC 26.9 (hot-patched)** OpenAPI spec: the published 26.9 spec plus two checked-in overlays. One adds the device PATCH that 26.9 tenants are hot-patched to serve, so `devices update-device` sends **PATCH**. The other gives the three AD group views the JSON body the server requires and the spec omits. See [What changed in CCC 26.9](#what-changed-in-ccc-269) for the command-level delta, and [What changed in CCC 26.7](#what-changed-in-ccc-267) for the release before it.
 
 > **For AI agents:** see [docs/AGENTS.md](docs/AGENTS.md) for a UI-term → CLI-command operating guide. The `elisity glossary` group is the runtime lookup surface.
 
@@ -209,8 +209,9 @@ The API-backed groups are generated from the CCC OpenAPI specification, pulled f
 live tenant at `GET /v3/api-docs` (served unauthenticated). The current command set was
 generated from the **CCC 26.9** spec — OpenAPI 3.1.0, 487 paths / 631 operations —
 captured from `release-demos.idp02.elisity.io` (built on release-26.9.0, 2026-10-10) on
-2026-10-15, plus the 26.9 hot-patch overlay (one operation, the device `PATCH`; see
-[Spec overlays](#spec-overlays)). The previous set came from the CCC 26.7 spec (OpenAPI 3.1.0, 441 paths / 583
+2026-10-15, plus two 26.9 overlays: the hot-patch overlay (one operation, the device
+`PATCH`) and the AD group views body overlay (a request body for three operations); see
+[Spec overlays](#spec-overlays). The previous set came from the CCC 26.7 spec (OpenAPI 3.1.0, 441 paths / 583
 operations, captured from `insights-demo.idp01.elisity.io` on 2026-08-05), and the one
 before that from the CCC 26.3-era spec (OpenAPI 3.0.1, 329 paths / 436 operations,
 captured 2026-06-21).
@@ -241,10 +242,11 @@ fall back to a path-prefix guess and need an explicit mapping decision.
 # 2. Map any new tags in TAG_TO_GROUP (generate_commands.py), then regenerate.
 python3 generate_commands.py --spec new-api-docs.json
 
-# CCC 26.9 needs its hot-patch overlay (see "Spec overlays" below). Pass the same
-# --overlay to spec_diff.py so the diff describes what the CLI ships.
+# CCC 26.9 needs both of its overlays (see "Spec overlays" below). Pass the same
+# --overlay flags to spec_diff.py so the diff describes what the CLI ships.
 python3 generate_commands.py --spec api-docs-26.9.json \
-    --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json
+    --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json \
+    --overlay spec-overlays/ccc-26.9-ad-group-views-body.json
 
 # The spec path resolves as: --spec > $ELISITY_API_SPEC > the historical host path
 ELISITY_API_SPEC=new-api-docs.json python3 generate_commands.py
@@ -296,6 +298,19 @@ operation at that path, replaces the keys in `set`, marks the copy with
 spec's definition wins and the overlay entry is skipped with a note; if the operation
 it clones is missing, generation fails.
 
+An overlay can also correct an operation the spec declares wrongly. An entry
+`{"path", "method", "patch"}` sets each key in `patch` on that existing operation, but
+only where the spec leaves the key missing or `null`; a key the spec defines keeps the
+spec's value, with a note. If the operation is missing, generation fails. An entry has
+either `cloneFrom` or `patch`, never both. CCC 26.9 declares the three AD group views
+(`getGroupsView`, `getGroupUsers`, `getGroupDevices`) with `requestBody: null`, but the
+server answers a POST without a body with 400.
+[`spec-overlays/ccc-26.9-ad-group-views-body.json`](spec-overlays/ccc-26.9-ad-group-views-body.json)
+gives each one an optional `application/json` object body, plus
+`x-elisity-default-body: {}`: the generated command sends `{}` when neither `--body` nor
+`--body-file` is given. Only overlays set `x-elisity-default-body`. Delete this overlay
+once the published spec declares the bodies.
+
 The CLI omits the device `PUT` (`OMITTED_OPERATIONS`) because the `PATCH` replaces it.
 Generation fails when a spec has an omitted operation but not its replacement, so
 regenerating 26.9 without the overlay is an error, not a CLI that has quietly lost
@@ -319,7 +334,7 @@ review by eye:
 
 ## What changed in CCC 26.9
 
-The command set is generated from the CCC 26.9 OpenAPI spec, pulled from `release-demos.idp02.elisity.io`, with the 26.9 hot-patch overlay applied (see below). The previous set came from the 26.7 spec.
+The command set is generated from the CCC 26.9 OpenAPI spec, pulled from `release-demos.idp02.elisity.io`, with the 26.9 hot-patch overlay and the AD group views body overlay applied (see below). The previous set came from the 26.7 spec.
 
 Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15; that tenant was built on release-26.9.0 (2026-10-10). The spec itself carries no CCC version stamp (`info.version` is `1.0.0`).
 
@@ -328,6 +343,7 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 | Spec paths | 441 | 487 |
 | Spec operations | 583 | 631 |
 | Hot-patch overlay operations | — | 1 |
+| Operations given a request body by overlay | — | 3 |
 | Generated REST commands | 583 | 631 |
 
 **49 commands added, 1 removed, 84 operations changed**, and `devices update-device` changed HTTP method.
@@ -343,6 +359,13 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 - The overlay makes `spec_diff.py` list the PATCH as an added `devices update-device`. It is not new: the command existed and now uses a different method, so it is not counted in the 49 additions below.
 
 **`ad set-groups-default-enabled` requires `--confirm`.** The spec calls it a "master reset" of the enable-all-groups default, so it is gated like the other destructive commands (68 in total).
+
+### AD group views send a JSON body
+
+`elisity ad get-groups-view`, `ad get-group-users <id>` and `ad get-group-devices <id>` send the JSON body `{}` (with `Content-Type: application/json`) when you give neither `--body` nor `--body-file`. Both flags are accepted. `elisity ad get-groups-view --size 5` works with no other arguments.
+
+- **Why.** The 26.9 spec declares these three POSTs with no request body, so without a fix the CLI sent none, and the server rejects a bodiless POST: on a 26.9.0 tenant, `POST /api/ad-connector-service/v1/groups?size=5` returned 400 with no body and 200 with `{}` (2026-10-15).
+- **Where the body comes from.** [`spec-overlays/ccc-26.9-ad-group-views-body.json`](spec-overlays/ccc-26.9-ad-group-views-body.json) patches the three operations (see [Spec overlays](#spec-overlays)). No other command sends a body you did not give; the other bodiless POST/PUT operations in 26.9 are actions and stay bodiless.
 
 ### Removed commands (breaking)
 
