@@ -263,6 +263,11 @@ python3 tools/audit_counts.py
 pytest
 ```
 
+The test that regenerates from the 26.9 spec and compares the result byte-for-byte with
+the committed modules needs the full spec, which is not committed; without it the test
+skips. Set `ELISITY_REQUIRE_SPECS=1` wherever the specs are staged (a release check, a
+regeneration) and a missing spec fails the run instead of skipping.
+
 **The generator refuses to run if any spec tag has no `TAG_TO_GROUP` entry**, printing
 each unmapped tag, its operation count, and the group the path-prefix fallback would
 otherwise have picked. This is deliberate: an unmapped tag is not a loud failure, it is
@@ -332,7 +337,7 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 `elisity devices update-device <id>` now sends `PATCH /api/identity-graph/v1/devices/{id}` (ENG-31333). The CLI no longer has a command for the device `PUT`.
 
 - **Why.** PUT replaces the device's IP and VEN, so an attribute-only body detached a dynamically attached device. With PATCH, an omitted, `null` or empty `ip` / `venId` keeps the current value, and attributes merge into the target enrichment layer. Same permission and `If-Match` precondition as PUT; returns 204.
-- **Which tenants.** CCC 26.9 tenants are being hot-patched to serve the PATCH (ENG-31142, Elisity/ccc PR #17262). A 26.9 tenant without the hot patch rejects it; there is no PUT fallback.
+- **Which tenants.** `update-device` needs a CCC 26.9 tenant with the ENG-31142 hot patch (Elisity/ccc PR #17262), or a later release that ships the PATCH. It fails, most likely with 405 Method Not Allowed, on CCC 26.7 tenants (the 26.7 spec has only PUT and DELETE at that path) and on 26.9 tenants without the hot patch. There is no PUT fallback, so check the tenant's release before you rely on it.
 - **Where the PATCH comes from.** The published 26.9 spec predates the hot patch and declares only `PUT` and `DELETE` at that path. The generator adds the PATCH from [`spec-overlays/ccc-26.9-hotpatch-device-patch.json`](spec-overlays/ccc-26.9-hotpatch-device-patch.json), cloned from the PUT (parameters, request body), with its provenance recorded in the overlay. Without `--overlay` the generator refuses the 26.9 spec rather than silently dropping `update-device`.
 - `--target-enrichment-layer` now reaches the request: generated PATCH commands pass query parameters through.
 - The overlay makes `spec_diff.py` list the PATCH as an added `devices update-device`. It is not new: the command existed and now uses a different method, so it is not counted in the 49 additions below.

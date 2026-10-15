@@ -996,6 +996,10 @@ def _emitted_names(spec):
 
 def _require(spec_path):
     if not spec_path.exists():
+        # Where the specs are meant to be staged, a missing one must not turn
+        # the byte-identity check into a quiet skip (Leia round 2, L-1).
+        if os.environ.get("ELISITY_REQUIRE_SPECS") == "1":
+            pytest.fail(f"{spec_path.name} not staged, and ELISITY_REQUIRE_SPECS=1")
         pytest.skip(f"{spec_path.name} not staged in this checkout")
     return json.loads(spec_path.read_text())
 
@@ -1214,6 +1218,16 @@ class TestCommittedTreeMatchesTheSpec:
             )
         on_disk = {p.name for p in COMMANDS_DIR.glob("*.py")}
         assert on_disk - generated == {f"{g}.py" for g in HANDCODED_GROUPS}
+
+    def test_a_missing_spec_fails_when_specs_are_required(self, monkeypatch, tmp_path):
+        """ELISITY_REQUIRE_SPECS=1 turns the byte-identity skip into a failure."""
+        missing = tmp_path / "api-docs-26.9.0-release-demos.json"
+        monkeypatch.setenv("ELISITY_REQUIRE_SPECS", "1")
+        with pytest.raises(pytest.fail.Exception, match="ELISITY_REQUIRE_SPECS=1"):
+            _require(missing)
+        monkeypatch.delenv("ELISITY_REQUIRE_SPECS")
+        with pytest.raises(pytest.skip.Exception):
+            _require(missing)
 
     def test_committed_names_and_endpoints_match_26_9(self):
         """CI's stand-in for the byte-identity test above: every committed
