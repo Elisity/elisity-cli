@@ -465,7 +465,7 @@
 | topology | `virtual-edge-bulk-upload` | Bulk upload Virtual Edges from XLSX file |
 | topology | `virtual-edge-node-bulk-upload` | Bulk upload Virtual Edge Nodes from XLSX file |
 
-### Update operations (83 commands)
+### Update operations (82 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
@@ -483,7 +483,6 @@
 | devices | `recalculate-attributes` | Recalculate attributes on all devices |
 | devices | `update` | Update suppression entry |
 | devices | `update-configuration` | Update time-based configuration |
-| devices | `update-device` | Update device by ID |
 | devices | `update-settings` | Update offline purge settings (global and policy groups) |
 | insights | `reorder-suggestion` | Reorder Suggestion |
 | insights | `save-settings` | Save settings for Policy Suggestion |
@@ -610,12 +609,13 @@
 | topology | `force-delete-ven` | Force delete a Virtual Edge Node in decommission state |
 | topology | `use-default-logger-level` | Reset logger to default level |
 
-### Patch operations (8 commands)
+### Patch operations (9 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
 | devices | `enrich-by-id-append` | Enrich device by ID and append to existing data in layer (create layer if not exists). |
 | devices | `enrich-by-ip-append` | Enrich device by IP and append to existing data in layer (create layer if not exists). |
+| devices | `update-device` | Partially update device by ID |
 | devices | `update-workload` | Update workload STATIC attributes |
 | devices | `update-workload-interface` | Update STATIC layer of a workload interface |
 | policy | `move` | Move a folder under a different parent |
@@ -830,7 +830,7 @@ Profile and configuration management.
 | `sync-endpoint` | Trigger immediate workload sync for a specific endpoint |
 | `update` | Update suppression entry |
 | `update-configuration` | Update time-based configuration |
-| `update-device` | Update device by ID |
+| `update-device` | Partially update device by ID |
 | `update-settings` | Update offline purge settings (global and policy groups) |
 | `update-workload` | Update workload STATIC attributes |
 | `update-workload-interface` | Update STATIC layer of a workload interface |

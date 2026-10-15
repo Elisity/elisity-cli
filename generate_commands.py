@@ -38,6 +38,15 @@ DEFAULT_OUTPUT_DIR = Path(__file__).parent / "src" / "elisity_cli" / "commands"
 # unregister `elisity reporting` / `elisity glossary` from the CLI.
 HANDCODED_GROUPS = ("glossary", "reporting")
 
+DEVICE_PATH = "/api/identity-graph/v1/devices/{id}"
+
+# PUT replaces a device's IP and VEN, so an attribute-only body detaches a
+# dynamically attached device. The CLI exposes no PUT for these operations.
+OMITTED_OPERATIONS = {("put", DEVICE_PATH)}
+
+# Operations published under a name other than the one their operationId gives.
+COMMAND_NAME_OVERRIDES = {("patch", DEVICE_PATH): "update-device"}
+
 # Map OpenAPI tags to CLI command group names
 #
 # CCC 26.7 renamed a large set of tags from `kebab-case-controller` style to
@@ -675,9 +684,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
             lines.append("        result = client.put(endpoint, params=params)")
     elif method_lower == "patch":
         if has_body:
-            lines.append("        result = client.patch(endpoint, data=body)")
+            lines.append("        result = client.patch(endpoint, data=body, params=params)")
         else:
-            lines.append("        result = client.patch(endpoint)")
+            lines.append("        result = client.patch(endpoint, params=params)")
     elif method_lower == "delete":
         if has_body:
             lines.append("        result = client.delete(endpoint, params=params, data=body)")
@@ -843,7 +852,9 @@ def build_groups(spec: dict) -> tuple:
         group_name, matched_by = resolve_group(tags, path)
         if matched_by == "path-prefix":
             unmapped.append((tags, method, path))
-        cmd_name = make_command_name(method, op_id, path, tags[0])
+        if (method, path) in OMITTED_OPERATIONS:
+            continue
+        cmd_name = COMMAND_NAME_OVERRIDES.get((method, path)) or make_command_name(method, op_id, path, tags[0])
         groups[group_name].append((method, path, op, cmd_name))
 
     return groups, unmapped
