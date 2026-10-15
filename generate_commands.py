@@ -1141,6 +1141,10 @@ def load_overlay(overlay_path) -> dict:
         raise SystemExit(f"ERROR: {overlay_path} is not valid JSON — {e}")
     if not overlay.get("provenance") or not isinstance(overlay.get("operations"), list):
         raise SystemExit(f"ERROR: {overlay_path} needs a 'provenance' and an 'operations' list")
+    for i, entry in enumerate(overlay["operations"]):
+        missing = [k for k in ("path", "method", "cloneFrom") if not entry.get(k)]
+        if missing:
+            raise SystemExit(f"ERROR: {overlay_path} operation #{i} is missing {', '.join(missing)}")
     return overlay
 
 

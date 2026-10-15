@@ -1278,6 +1278,14 @@ class TestDeviceUpdateIsPatchOnly:
         with pytest.raises(SystemExit, match="does not fit"):
             apply_overlays({"paths": {DEVICE_PATH: {"delete": {}}}}, [OVERLAY_269])
 
+    def test_malformed_overlay_entry_fails_with_a_message(self, tmp_path):
+        from generate_commands import apply_overlays
+
+        bad = tmp_path / "bad.json"
+        bad.write_text(json.dumps({"provenance": "x", "operations": [{"path": "/a"}]}))
+        with pytest.raises(SystemExit, match="missing method, cloneFrom"):
+            apply_overlays({"paths": {}}, [bad])
+
 
 class TestSetGroupsDefaultEnabledIsGated:
     """The 26.9 AD groups "master reset" requires --confirm (Obiwan, round 1 Q2)."""
