@@ -737,7 +737,7 @@ def cmd_patch_virtual_edge_group(ctx, id, body_data, body_file, cmd_fmt, cmd_que
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)

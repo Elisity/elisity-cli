@@ -407,7 +407,7 @@ def cmd_update(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -438,7 +438,7 @@ def cmd_rename(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -469,7 +469,7 @@ def cmd_move(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)

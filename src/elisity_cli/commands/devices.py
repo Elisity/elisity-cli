@@ -258,7 +258,7 @@ def cmd_delete(ctx, id, cmd_fmt, cmd_query, confirm):
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
 def cmd_update_device(ctx, id, target_enrichment_layer, body_data, body_file, cmd_fmt, cmd_query):
-    """Update device by ID"""
+    """Partially update device by ID"""
     if cmd_fmt:
         ctx.format = cmd_fmt
     if cmd_query:
@@ -277,7 +277,7 @@ def cmd_update_device(ctx, id, target_enrichment_layer, body_data, body_file, cm
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.put(endpoint, data=body, params=params)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -1404,7 +1404,7 @@ def cmd_enrich_by_id_append(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -1542,7 +1542,7 @@ def cmd_enrich_by_ip_append(ctx, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -1740,7 +1740,7 @@ def cmd_update_workload_interface(ctx, workloadid, interfaceid, body_data, body_
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -1792,7 +1792,7 @@ def cmd_update_workload(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
