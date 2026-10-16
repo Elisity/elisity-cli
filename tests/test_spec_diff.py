@@ -626,3 +626,22 @@ def test_cli_malformed_json_fails_cleanly(tmp_path):
     )
     assert proc.returncode != 0
     assert "not valid JSON" in (proc.stdout + proc.stderr)
+
+
+def test_overlay_is_applied_to_the_new_spec(tmp_path, capsys):
+    """--overlay makes the diff describe what the CLI ships (CCC 26.9 hot patch)."""
+    device = "/api/identity-graph/v1/devices/{id}"
+    replace_op = op("updateDevice", tag="Device - CRUD", body=json_body({"type": "object"}),
+                    responses={"204": {"description": "ok"}})
+    spec = make_spec({device: {"put": replace_op}})
+    old_p, new_p = tmp_path / "o.json", tmp_path / "n.json"
+    old_p.write_text(json.dumps(spec))
+    new_p.write_text(json.dumps(spec))
+    overlay = REPO_ROOT / "spec-overlays" / "ccc-26.9-hotpatch-device-patch.json"
+
+    assert main([str(old_p), str(new_p), "--json", "--overlay", str(overlay)]) == 0
+    out = capsys.readouterr()
+    added = json.loads(out.out)["added"]
+    assert [(a["method"], a["path"], a["command"]) for a in added] == [
+        ("PATCH", device, "update-device")]
+    assert "added PATCH" in out.err

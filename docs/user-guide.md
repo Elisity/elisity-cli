@@ -42,7 +42,7 @@ Out of scope for this guide:
 - Product positioning, architecture explanations, or "why microsegmentation". Those
   belong in product docs.
 - A command-by-command reference. See [Command Reference](command-reference.md) for
-  all 613 commands.
+  all 650 commands.
 - Building and deploying the CLI itself. See the repository README for development
   setup.
 
@@ -134,7 +134,9 @@ verb whose path names a destructive action (`delete`, `bulk-delete`, `force-dele
 `force`, `purge`, `decommission`, `detach`, `reset-to-default`, `recreate`). So the
 POST bulk deletes — `topology bulk-delete-ve-ns`, `topology bulk-force-delete-ve-ns`,
 `policy bulk-delete` and the rest — are gated too, and so is the PUT
-`topology decommission-virtual-edge-node`. 67 commands in total.
+`topology decommission-virtual-edge-node`. One operation is gated by name rather than
+path: `ad set-groups-default-enabled`, which CCC calls a "master reset". 68 commands
+in total.
 
 The dry-run siblings are deliberately **not** gated:
 `topology validate-virtual-edge-bulk-delete` POSTs to `.../bulk/delete/validate` and
@@ -1447,7 +1449,7 @@ HTTP 403: {"error":"Forbidden","message":"User does not have required scope: pol
 - *Resource not found* — the ID you passed doesn't exist. Common after a delete
   or in cross-tenant scripts where the IDs don't match.
 - *Endpoint not enabled on this CCC version* — older CCC tenants may not have all
-  613 commands implemented. Run the corresponding `--help` to see what's available.
+  650 commands implemented. Run the corresponding `--help` to see what's available.
 
 ```text
 HTTP 404: {"error":"Not Found"}
@@ -2279,7 +2281,7 @@ code `0`.
 
 ## Appendix A: full command tree
 
-The CLI exposes 613 commands. The full reference, including parameters and return
+The CLI exposes 650 commands. The full reference, including parameters and return
 types for each, lives at:
 
 - [Command Reference](command-reference.md)
@@ -2307,7 +2309,7 @@ Usage: elisity [OPTIONS] COMMAND [ARGS]...
   Elisity CCC CLI — command-line interface to the Cloud Control Center API.
 
   Manages topology, policies, devices, connectors, AD/Entra integration,
-  traffic flows, and system operations — 613 commands across 12 groups.
+  traffic flows, and system operations — 650 commands across 12 groups.
 
   Configuration:   Set CCC_BASE_URL, CCC_CLIENT_ID, CCC_CLIENT_SECRET env
   vars, or   run 'elisity config set-profile' to store credentials.
@@ -2695,14 +2697,14 @@ Judgment calls made while writing this guide. Surfaced here for reviewer awarene
   guide replaces it with `service-account@your-org.example` in the displayed JSON
   blob to keep the file tenant-neutral. Other capture data (UUIDs, timestamps,
   numericIds) is preserved verbatim.
-- **Sample 18 root-help command count.** The root help text now reads "613
-  commands" (583 REST + 20 GraphQL reporting + 7 CLI-native auth/config + 3
-  CLI-native glossary) after the CCC 26.7 regeneration. The sample in this guide
+- **Sample 18 root-help command count.** The root help text now reads "658
+  commands" (623 REST + 17 GraphQL reporting + 7 CLI-native auth/config + 3
+  CLI-native glossary) after the CCC 26.9 regeneration. The sample in this guide
   was captured against the CCC 26.3 command set, when the same line read "466
-  commands" (436 REST); the prose has been updated to 613 but the captured block
+  commands" (436 REST); the prose has been updated to 658 but the captured block
   reflects its capture date. Older copy in the project may reference "443"
-  (pre-reporting), "441", "436", "462", "465" (pre-`diagnose-low-score`) or
-  "466" (pre-26.7) — all stale. `tools/audit_counts.py` now checks the root help
+  (pre-reporting), "441", "436", "462", "465" (pre-`diagnose-low-score`), "466"
+  (pre-26.7), or "610" / "613" (26.7) — all stale. `tools/audit_counts.py` now checks the root help
   string in `src/elisity_cli/main.py` as well as the README and the command
   reference, so this specific number can no longer drift silently.
 - **Sample 09 (distribution zones table).** The captured table is 19 columns wide

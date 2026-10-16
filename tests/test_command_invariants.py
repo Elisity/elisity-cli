@@ -63,6 +63,9 @@ SPEC_267 = Path(
     os.environ.get("ELISITY_API_SPEC", REPO_ROOT.parent / "input" / "api-docs-26.7.json")
 )
 SPEC_263 = REPO_ROOT.parent / "input" / "api-docs-baseline-26.3.json"
+# The spec the committed command set is generated from (CCC 26.9, pulled from
+# release-demos.idp02.elisity.io on 2026-10-15).
+SPEC_269 = REPO_ROOT.parent / "input" / "api-docs-26.9.0-release-demos.json"
 
 
 @pytest.fixture(scope="module")
@@ -115,11 +118,15 @@ class TestConfirmGate:
             if "client.delete(" in block
         )
         assert deletes == 52, deletes
-        assert gate["destructiveCommands"] == 67, gate["destructiveCommands"]
+        assert gate["destructiveCommands"] == 68, gate["destructiveCommands"]
         assert gate["destructiveCommands"] > deletes
 
     def test_the_non_delete_destructive_commands_are_named(self, counts):
-        """Pin the 15 the verb-shaped gate missed, so a silent loss fails here."""
+        """Pin the 16 the verb-shaped gate missed, so a silent loss fails here.
+
+        15 by path segment, plus `ad set-groups-default-enabled` from
+        DESTRUCTIVE_OPERATIONS (CCC 26.9).
+        """
         gated_non_delete = set()
         for module in sorted(COMMANDS_DIR.glob("*.py")):
             if module.name == "__init__.py":
@@ -129,6 +136,7 @@ class TestConfirmGate:
                 if "Use --confirm" in block and "client.delete(" not in block:
                     gated_non_delete.add(f"{module.stem} {name}")
         assert gated_non_delete == {
+            "ad set-groups-default-enabled",
             "devices detach",
             "devices detach-by-mac",
             "insights recreate-policy-suggestions",
@@ -183,7 +191,6 @@ class TestConfirmGate:
         """
         assert counts["confirmGate"]["nameDestructivePathNot"] == []
         assert set(counts["confirmGate"]["ruledNonDestructiveDespiteName"]) == {
-            "policy force-sync",
             "topology validate-virtual-edge-bulk-delete",
             "topology validate-virtual-edge-node-bulk-delete",
         }
@@ -215,8 +222,12 @@ class TestConfirmGate:
                     cleared_but_destructive.append(
                         f"{module.stem} {name} ({verb} {endpoint})"
                     )
-        assert state_changing == 375, state_changing
-        assert safe_prefixed == 39, safe_prefixed
+        # CCC 26.9: 375 -> 416 and 39 -> 61. The 22 new safe-prefixed POSTs are
+        # the search-/export-/list-azure-/get-*-metrics-summary/AD group reads.
+        # 416 -> 408 once the eight platform-internal POSTs in OMITTED_OPERATIONS
+        # stopped being generated; none of them carried a safe prefix.
+        assert state_changing == 408, state_changing
+        assert safe_prefixed == 61, safe_prefixed
         assert cleared_but_destructive == [], (
             "AGENTS.md's safe-prefix rule clears a DESTRUCTIVE command: "
             + ", ".join(cleared_but_destructive)
@@ -956,3 +967,374 @@ class TestGroupsLoad:
                 f"{name}: source scan found {info['commands']} commands but "
                 f"Click registered {len(mod.group.commands)}"
             )
+
+
+# --------------------------------------------------------------------------
+# Command-name overrides (CCC 26.9)
+# --------------------------------------------------------------------------
+
+DATA_DIR = REPO_ROOT / "tests" / "data"
+# Naming skeletons of the 26.7 / 26.9 specs (tools/spec_skeleton.py): every
+# operation's path, method, tags and operationId in spec order — all that
+# naming and grouping read. Committed, so the naming guards below run in CI,
+# where the full specs are not staged.
+SKELETON_267 = DATA_DIR / "ccc-26.7-operations.json"
+SKELETON_269 = DATA_DIR / "ccc-26.9-operations.json"
+OVERLAY_269 = REPO_ROOT / "spec-overlays" / "ccc-26.9-hotpatch-device-patch.json"
+OVERLAY_269_AD = REPO_ROOT / "spec-overlays" / "ccc-26.9-ad-group-views-body.json"
+# Every overlay the committed tree is generated with, in the order the README gives.
+OVERLAYS_269 = [OVERLAY_269, OVERLAY_269_AD]
+
+
+def _emitted_names(spec):
+    """{(METHOD, path): (group, command)} exactly as the generator emits them."""
+    from generate_commands import dedupe_command_names
+
+    groups, _ = build_groups(spec)
+    return {
+        (method.upper(), path): (group, name)
+        for group, commands in groups.items()
+        for method, path, _op, name in dedupe_command_names(commands)
+    }
+
+
+def _require(spec_path):
+    if not spec_path.exists():
+        # Where the specs are meant to be staged, a missing one must not turn
+        # the byte-identity check into a quiet skip (Leia round 2, L-1).
+        if os.environ.get("ELISITY_REQUIRE_SPECS") == "1":
+            pytest.fail(f"{spec_path.name} not staged, and ELISITY_REQUIRE_SPECS=1")
+        pytest.skip(f"{spec_path.name} not staged in this checkout")
+    return json.loads(spec_path.read_text())
+
+
+def _naming_spec(full_path, skeleton_path):
+    """The full spec when staged, else its committed naming skeleton."""
+    path = full_path if full_path.exists() else skeleton_path
+    return json.loads(path.read_text())
+
+
+def _spec_269():
+    """What the committed tree is generated from: 26.9 + its overlays."""
+    from generate_commands import apply_overlays
+
+    spec, _notes = apply_overlays(_naming_spec(SPEC_269, SKELETON_269), OVERLAYS_269)
+    return spec
+
+
+def _spec_267():
+    return _naming_spec(SPEC_267, SKELETON_267)
+
+
+class TestCommandNameOverrides:
+    """COMMAND_NAME_OVERRIDES pins names the operationId gets wrong.
+
+    The 26.9 failure it exists for: new /v1/workloads/attach[ed] operations
+    carried the operationIds `attach` / `attached`, so dedupe moved the shipped
+    `devices attach` / `devices attached` to `attach-post` / `attached-post` and
+    gave their names to a different endpoint. Nothing failed; the command
+    count went up by exactly the right number.
+    """
+
+    def test_there_is_one_override_map(self):
+        """PR #7 and the 26.9 regeneration each defined COMMAND_NAME_OVERRIDES;
+        the second definition silently replaced the first."""
+        source = (REPO_ROOT / "generate_commands.py").read_text()
+        assert len(re.findall(r"^COMMAND_NAME_OVERRIDES\s*=", source, re.MULTILINE)) == 1
+
+    def test_override_beats_the_operation_id(self):
+        from generate_commands import make_command_name
+
+        name = make_command_name(
+            "get", "list_2", "/api/identity-graph/v1/workload-distribution-zones", "x"
+        )
+        assert name == "list-workload-distribution-zones"
+
+    def test_operations_without_an_override_still_use_the_operation_id(self):
+        from generate_commands import make_command_name
+
+        assert make_command_name("get", "getAllSitesV2", "/api/x/v2/sites", "Sites") == (
+            "get-all-sites-v2"
+        )
+
+    def test_a_colliding_override_fails_generation(self, monkeypatch):
+        import generate_commands as gen
+
+        spec = {"paths": {
+            "/api/topology/v1/a": {"get": {"tags": ["Sites"], "operationId": "getThing",
+                                           "responses": {"200": {}}}},
+            "/api/topology/v1/b": {"get": {"tags": ["Sites"], "operationId": "other",
+                                           "responses": {"200": {}}}},
+        }}
+        monkeypatch.setattr(gen, "COMMAND_NAME_OVERRIDES",
+                            {("GET", "/api/topology/v1/b"): "get-thing"})
+        groups, _ = gen.build_groups(spec)
+        with pytest.raises(SystemExit, match="get-thing"):
+            gen.assert_overrides_emitted(groups)
+
+    def test_an_override_that_displaces_a_shipped_command_fails_generation(self, monkeypatch):
+        """Leia M-1: the override comes FIRST in spec order, so dedupe suffixes
+        the other, already-shipped command and the override itself is intact."""
+        import generate_commands as gen
+
+        spec = {"paths": {
+            "/api/topology/v1/b": {"get": {"tags": ["Sites"], "operationId": "other",
+                                           "responses": {"200": {}}}},
+            "/api/topology/v1/a": {"get": {"tags": ["Sites"], "operationId": "getThing",
+                                           "responses": {"200": {}}}},
+        }}
+        monkeypatch.setattr(gen, "COMMAND_NAME_OVERRIDES",
+                            {("GET", "/api/topology/v1/b"): "get-thing"})
+        groups, _ = gen.build_groups(spec)
+        names = [n for _m, _p, _o, n in gen.dedupe_command_names(groups["topology"])]
+        assert names == ["get-thing", "get-thing-get"]   # the displacement is real
+        with pytest.raises(SystemExit, match="displaced by an override 'get-thing'"):
+            gen.assert_overrides_emitted(groups)
+
+    def test_leias_displacement_probe_fails_on_the_real_26_9_operations(self, monkeypatch):
+        """The exact M-1 probe: an override taking `get-virtual-edge-by-id`
+        used to pass the guard and push the shipped command to `-get`."""
+        import generate_commands as gen
+
+        monkeypatch.setitem(
+            gen.COMMAND_NAME_OVERRIDES,
+            ("GET", "/api/identity-graph/v1/workload-distribution-zones"),
+            "get-virtual-edge-by-id",
+        )
+        groups, _ = gen.build_groups(_spec_269())
+        with pytest.raises(SystemExit, match="get-virtual-edge-by-id"):
+            gen.assert_overrides_emitted(groups)
+
+    def test_the_committed_map_passes_the_guard(self):
+        from generate_commands import assert_overrides_emitted
+
+        for spec in (_spec_269(), _spec_267()):
+            groups, _ = build_groups(spec)
+            assert_overrides_emitted(groups)   # must not raise
+
+    def test_every_override_exists_in_the_26_9_spec_and_is_emitted_verbatim(self):
+        """Catches a typo in an override path, which would silently do nothing."""
+        from generate_commands import COMMAND_NAME_OVERRIDES
+
+        emitted = _emitted_names(_spec_269())
+        for key, want in COMMAND_NAME_OVERRIDES.items():
+            assert key in emitted, f"override for {key} matches no 26.9 operation"
+            assert emitted[key][1] == want, (key, emitted[key])
+
+    def test_platform_internal_operations_are_not_emitted(self):
+        """The platform-internal operations in OMITTED_OPERATIONS (value None)
+        get no command, in 26.9 and in 26.7 where some of them already existed."""
+        from generate_commands import OMITTED_OPERATIONS
+
+        internal = {(m.upper(), p) for (m, p), repl in OMITTED_OPERATIONS.items()
+                    if repl is None}
+        assert ("POST", "/api/identity-graph/v1/workloads/attach") in internal
+        assert ("POST", "/api/identity-graph/v1/devices/attach") in internal
+        assert ("POST", "/api/policy/v1/state/resync") in internal
+        for spec in (_spec_269(), _spec_267()):
+            emitted = _emitted_names(spec)
+            assert not internal & set(emitted), sorted(internal & set(emitted))
+
+    def test_no_26_9_addition_ships_a_generic_or_suffixed_name(self):
+        old = _emitted_names(_spec_267())
+        new = _emitted_names(_spec_269())
+        generic = {"list", "usage", "export", "search", "attach", "attached", "get",
+                   "create", "update", "delete"}
+        bad = []
+        for key in set(new) - set(old):
+            group, name = new[key]
+            if name in generic or re.search(r"-(get|post|put|patch|delete)(-\d+)?$", name):
+                bad.append(f"{group} {name} ({key[0]} {key[1]})")
+        assert bad == []
+
+    def test_no_26_7_command_changes_name_or_group_except_the_documented_ones(self):
+        old = _emitted_names(_spec_267())
+        new = _emitted_names(_spec_269())
+        moved = {k: (old[k], new[k]) for k in set(old) & set(new) if old[k] != new[k]}
+        assert moved == {
+            ("GET", "/api/reporting/v1/snapshots/{id}.pdf"):
+                (("system", "retrieve-snapshot-image"), ("system", "retrieve-snapshot-pdf")),
+        }
+
+    def test_overrides_rename_exactly_one_26_7_command(self, monkeypatch):
+        """Against 26.7 the map only renames suppression-list `get-users`.
+
+        This is the README's regeneration check made executable: the 26.7
+        command set still regenerates byte-for-byte apart from that one name.
+        """
+        import generate_commands as gen
+
+        spec = _spec_267()
+        with_map = _emitted_names(spec)
+        monkeypatch.setattr(gen, "COMMAND_NAME_OVERRIDES", {})
+        without = _emitted_names(spec)
+        assert {k: (without[k], with_map[k]) for k in with_map if with_map[k] != without[k]} == {
+            ("GET", "/api/identity-graph/v1/suppression"):
+                (("devices", "get-users"), ("devices", "search-suppression-list")),
+        }
+
+
+class TestSpecSkeletons:
+    """The committed skeletons are what the CI-side naming guards run on."""
+
+    @pytest.mark.parametrize("full, skeleton", [(SPEC_269, SKELETON_269),
+                                                (SPEC_267, SKELETON_267)])
+    def test_skeleton_matches_the_full_spec(self, full, skeleton):
+        import hashlib
+        from tools.spec_skeleton import skeleton as make_skeleton
+
+        _require(full)
+        committed = json.loads(skeleton.read_text())
+        assert committed["x-skeleton-of"]["sha256"] == hashlib.sha256(full.read_bytes()).hexdigest()
+        assert committed["paths"] == make_skeleton(json.loads(full.read_text()))["paths"]
+
+    def test_skeleton_names_match_the_full_spec(self):
+        """Naming reads nothing the skeleton dropped."""
+        from generate_commands import apply_overlays
+
+        full, _ = apply_overlays(_require(SPEC_269), OVERLAYS_269)
+        skel, _ = apply_overlays(json.loads(SKELETON_269.read_text()), OVERLAYS_269)
+        assert _emitted_names(full) == _emitted_names(skel)
+
+
+def _committed_commands():
+    """{(METHOD, path-with-{}): (group, command)} read from the committed modules."""
+    found = {}
+    for module in sorted(COMMANDS_DIR.glob("*.py")):
+        if module.stem in HANDCODED_GROUPS or module.name == "__init__.py":
+            continue
+        for block in module.read_text().split("@group.command(")[1:]:
+            name = block.split('"')[1]
+            endpoint = re.search(r'endpoint = f"([^"]+)"', block).group(1)
+            verb = re.search(r"client\.(get|post|put|patch|delete)(?:_ndjson)?\(", block).group(1)
+            found[(verb.upper(), re.sub(r"\{[^}]*\}", "{}", endpoint))] = (module.stem, name)
+    return found
+
+
+class TestCommittedTreeMatchesTheSpec:
+    """The committed commands/ are exactly what the generator emits for 26.9."""
+
+    def test_regenerating_from_26_9_reproduces_the_committed_modules(self, tmp_path):
+        import generate_commands as gen
+
+        _require(SPEC_269)
+        overlay_args = [arg for o in OVERLAYS_269 for arg in ("--overlay", str(o))]
+        assert gen.main(["--spec", str(SPEC_269), *overlay_args,
+                         "--output-dir", str(tmp_path)]) == 0
+        generated = {p.name for p in tmp_path.glob("*.py")}
+        for name in sorted(generated):
+            assert (tmp_path / name).read_text() == (COMMANDS_DIR / name).read_text(), (
+                f"{name} differs from a fresh 26.9 regeneration"
+            )
+        on_disk = {p.name for p in COMMANDS_DIR.glob("*.py")}
+        assert on_disk - generated == {f"{g}.py" for g in HANDCODED_GROUPS}
+
+    def test_a_missing_spec_fails_when_specs_are_required(self, monkeypatch, tmp_path):
+        """ELISITY_REQUIRE_SPECS=1 turns the byte-identity skip into a failure."""
+        missing = tmp_path / "api-docs-26.9.0-release-demos.json"
+        monkeypatch.setenv("ELISITY_REQUIRE_SPECS", "1")
+        with pytest.raises(pytest.fail.Exception, match="ELISITY_REQUIRE_SPECS=1"):
+            _require(missing)
+        monkeypatch.delenv("ELISITY_REQUIRE_SPECS")
+        with pytest.raises(pytest.skip.Exception):
+            _require(missing)
+
+    def test_committed_names_and_endpoints_match_26_9(self):
+        """CI's stand-in for the byte-identity test above: every committed
+        command has the name, group, method and path 26.9 (+ overlay) gives it."""
+        want = {
+            (method, re.sub(r"\{[^}]*\}", "{}", path)): name
+            for (method, path), name in _emitted_names(_spec_269()).items()
+        }
+        assert _committed_commands() == want
+
+
+class TestDeviceUpdateIsPatchOnly:
+    """ENG-31333 on CCC 26.9: update-device = PATCH, and no device PUT."""
+
+    def test_update_device_sends_patch_and_no_command_sends_the_device_put(self):
+        committed = _committed_commands()
+        assert committed[("PATCH", "/api/identity-graph/v1/devices/{}")] == (
+            "devices", "update-device")
+        assert ("PUT", "/api/identity-graph/v1/devices/{}") not in committed
+
+    def test_26_9_without_the_overlay_refuses_to_generate(self, tmp_path):
+        """Without the overlay, omitting the PUT would silently drop update-device."""
+        import generate_commands as gen
+
+        spec = json.loads(SKELETON_269.read_text())
+        assert "patch" not in spec["paths"]["/api/identity-graph/v1/devices/{id}"]
+        with pytest.raises(SystemExit, match="does not declare"):
+            gen.assert_omitted_operations_replaced(spec)
+        if SPEC_269.exists():
+            with pytest.raises(SystemExit, match="--overlay"):
+                gen.main(["--spec", str(SPEC_269), "--output-dir", str(tmp_path)])
+
+    def test_overlay_clones_the_put_and_records_provenance(self):
+        from generate_commands import DEVICE_PATH, apply_overlays
+
+        base = _naming_spec(SPEC_269, SKELETON_269)
+        spec, notes = apply_overlays(base, [OVERLAY_269])
+        ops = spec["paths"][DEVICE_PATH]
+        assert list(ops) == ["put", "patch", "delete"]   # PATCH sits where PUT did
+        patch = ops["patch"]
+        assert patch["x-elisity-overlay"] == "CCC 26.9 hot patch, ENG-31142/ENG-31333, 2026-10-15"
+        assert patch["tags"] == ops["put"]["tags"]
+        assert patch.get("parameters") == ops["put"].get("parameters")
+        assert patch.get("requestBody") == ops["put"].get("requestBody")
+        assert "204" in patch["responses"]
+        assert "omitted" in patch["description"] and "ip" in patch["description"]
+        assert "patch" not in base["paths"][DEVICE_PATH]   # input not mutated
+        assert len(notes) == 1 and "added PATCH" in notes[0]
+
+    def test_overlay_yields_to_a_spec_that_declares_the_patch(self):
+        from generate_commands import DEVICE_PATH, apply_overlays
+
+        native = {"tags": ["Device - CRUD"], "operationId": "patchDevice", "summary": "native"}
+        spec = {"paths": {DEVICE_PATH: {"put": {"tags": ["Device - CRUD"]}, "patch": native}}}
+        out, notes = apply_overlays(spec, [OVERLAY_269])
+        assert out["paths"][DEVICE_PATH]["patch"] == native
+        assert "already in the spec" in notes[0]
+
+    def test_overlay_that_no_longer_fits_the_spec_fails(self):
+        from generate_commands import DEVICE_PATH, apply_overlays
+
+        with pytest.raises(SystemExit, match="does not fit"):
+            apply_overlays({"paths": {DEVICE_PATH: {"delete": {}}}}, [OVERLAY_269])
+
+    def test_malformed_overlay_entry_fails_with_a_message(self, tmp_path):
+        from generate_commands import apply_overlays
+
+        bad = tmp_path / "bad.json"
+        bad.write_text(json.dumps({"provenance": "x", "operations": [{"path": "/a"}]}))
+        with pytest.raises(SystemExit, match="missing method, cloneFrom"):
+            apply_overlays({"paths": {}}, [bad])
+
+
+class TestSetGroupsDefaultEnabledIsGated:
+    """The 26.9 AD groups "master reset" requires --confirm (Obiwan, round 1 Q2)."""
+
+    def test_classified_destructive(self):
+        assert is_destructive_operation("PUT", "/api/ad-connector-service/v1/groups/default-enabled")
+        assert not is_destructive_operation("GET", "/api/ad-connector-service/v1/groups/default-enabled")
+
+    def test_refuses_without_confirm_and_sends_with_it(self, monkeypatch):
+        import elisity_cli.context as ctxmod
+
+        calls = []
+
+        class RecordingClient:
+            def put(self, endpoint, **kwargs):
+                calls.append(("put", endpoint, kwargs))
+                return {}
+
+        monkeypatch.setattr(ctxmod.CliContext, "ensure_client", lambda self: RecordingClient())
+        argv = ["ad", "set-groups-default-enabled", "--body", '{"enabled": true}']
+        refused = CliRunner().invoke(cli, argv)
+        assert refused.exit_code == 1 and calls == []
+        assert "Use --confirm" in refused.output
+
+        sent = CliRunner().invoke(cli, argv + ["--confirm"])
+        assert sent.exit_code == 0, sent.output
+        assert calls == [("put", "/api/ad-connector-service/v1/groups/default-enabled",
+                          {"data": {"enabled": True}, "params": None})]

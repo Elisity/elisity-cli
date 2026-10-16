@@ -44,9 +44,6 @@ CONFIRM_MARKER = "Use --confirm"
 # failure, so a future `bulk-nuke-sites` on an unrecognised path cannot slip
 # through the gap between the name and the path.
 NON_DESTRUCTIVE_DESPITE_NAME = {
-    "policy force-sync":
-        "POST /api/policy/v1/state/resync — triggers a state resync; 'force' is "
-        "about the resync, nothing is deleted.",
     "topology validate-virtual-edge-bulk-delete":
         "POST .../virtual-edges/bulk/delete/validate — dry run. Reports what a "
         "bulk delete WOULD do and changes nothing.",

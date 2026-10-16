@@ -16,6 +16,60 @@ def group(ctx):
     """Active Directory / Entra ID integration — connectors, users, groups, agents"""
     pass
 
+@group.command("get-groups-default-enabled")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_groups_default_enabled(ctx, cmd_fmt, cmd_query):
+    """Get the 'enable all groups by default' toggle"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups/default-enabled"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("set-groups-default-enabled")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@click.option("--confirm/--no-confirm", default=False, help="Confirm destructive operation")
+@pass_context
+def cmd_set_groups_default_enabled(ctx, body_data, body_file, cmd_fmt, cmd_query, confirm):
+    """Set the 'enable all groups by default' toggle (master reset)"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    if not confirm:
+        click.echo("Use --confirm to execute this destructive operation.", err=True)
+        raise SystemExit(1)
+    endpoint = f"/api/ad-connector-service/v1/groups/default-enabled"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.put(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("ping")
 @click.argument("nodeid")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
@@ -288,6 +342,194 @@ def cmd_refresh_all_ad_on_prem(ctx, cmd_fmt, cmd_query):
     client = ctx.ensure_client()
     try:
         result = client.post(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-groups-view")
+@click.option("--globalFilter", "globalFilter", type=str, default=None, help="Global filter")
+@click.option("--page", "page", type=int, default=None, help="Page number")
+@click.option("--size", "size", type=int, default=None, help="Page size")
+@click.option("--sort", "sort", type=str, default=None, help="Sort by column")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string (default: {})")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_groups_view(ctx, globalFilter, page, size, sort, body_data, body_file, cmd_fmt, cmd_query):
+    """Get groups view"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups"
+    params = {}
+    if globalFilter is not None:
+        params["globalFilter"] = globalFilter
+    if page is not None:
+        params["page"] = page
+    if size is not None:
+        params["size"] = size
+    if sort is not None:
+        params["sort"] = sort
+    body = {}
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("set-groups-enabled")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_set_groups_enabled(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Enable or disable one or many groups"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.patch(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-group-users")
+@click.argument("id")
+@click.option("--globalFilter", "globalFilter", type=str, default=None, help="Global filter")
+@click.option("--page", "page", type=int, default=None, help="Page number")
+@click.option("--size", "size", type=int, default=None, help="Page size")
+@click.option("--sort", "sort", type=str, default=None, help="Sort by column")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string (default: {})")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_group_users(ctx, id, globalFilter, page, size, sort, body_data, body_file, cmd_fmt, cmd_query):
+    """Get users that are direct members of a group"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups/{id}/users"
+    params = {}
+    if globalFilter is not None:
+        params["globalFilter"] = globalFilter
+    if page is not None:
+        params["page"] = page
+    if size is not None:
+        params["size"] = size
+    if sort is not None:
+        params["sort"] = sort
+    body = {}
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-group-devices")
+@click.argument("id")
+@click.option("--globalFilter", "globalFilter", type=str, default=None, help="Global filter")
+@click.option("--page", "page", type=int, default=None, help="Page number")
+@click.option("--size", "size", type=int, default=None, help="Page size")
+@click.option("--sort", "sort", type=str, default=None, help="Sort by column")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string (default: {})")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_group_devices(ctx, id, globalFilter, page, size, sort, body_data, body_file, cmd_fmt, cmd_query):
+    """Get devices that are direct members of a group"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups/{id}/devices"
+    params = {}
+    if globalFilter is not None:
+        params["globalFilter"] = globalFilter
+    if page is not None:
+        params["page"] = page
+    if size is not None:
+        params["size"] = size
+    if sort is not None:
+        params["sort"] = sort
+    body = {}
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("export-groups")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_export_groups(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Generate groups export as XLSX"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups/export"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -1015,6 +1257,26 @@ def cmd_get_suppressed_ip_attaches(ctx, cmd_fmt, cmd_query):
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/ad-connector-service/v1/ip-attach/suppressed"
+    params = None
+    client = ctx.ensure_client()
+    try:
+        result = client.get(endpoint, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("get-groups-count")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_get_groups_count(ctx, cmd_fmt, cmd_query):
+    """Get groups count"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/ad-connector-service/v1/groups/count"
     params = None
     client = ctx.ensure_client()
     try:

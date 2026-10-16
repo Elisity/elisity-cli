@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from generate_commands import (  # noqa: E402
     HANDCODED_GROUPS,
     TAG_TO_GROUP,
+    apply_overlays,
     build_groups,
     dedupe_command_names,
     iter_operations,
@@ -572,6 +573,14 @@ def main(argv=None):
     parser.add_argument("new_spec", help="Path to the new OpenAPI JSON spec")
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of text")
     parser.add_argument(
+        "--overlay",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Spec overlay to apply to the NEW spec (repeatable), exactly as "
+             "generate_commands.py --overlay does",
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="Exit 1 if new tags have no TAG_TO_GROUP mapping",
@@ -579,7 +588,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     old_spec = load_spec(args.old_spec)
-    new_spec = load_spec(args.new_spec)
+    new_spec, overlay_notes = apply_overlays(load_spec(args.new_spec), args.overlay)
+    for note in overlay_notes:
+        print(f"Spec overlay: {note}", file=sys.stderr)
     result = diff_specs(old_spec, new_spec)
 
     if args.json:

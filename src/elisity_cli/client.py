@@ -195,8 +195,8 @@ class CCCClient:
         except ValueError:
             return resp.text.strip()
 
-    def patch(self, endpoint: str, data: Any = None) -> Any:
-        resp = self._request("PATCH", endpoint, data=data)
+    def patch(self, endpoint: str, data: Any = None, params: Optional[Dict] = None) -> Any:
+        resp = self._request("PATCH", endpoint, data=data, params=params)
         resp.raise_for_status()
         if not resp.text:
             return {}

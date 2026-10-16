@@ -11,10 +11,14 @@ Spec resolution (first match wins):
 
 Usage:
     python3 generate_commands.py --spec ./api-docs-26.7.json
+    python3 generate_commands.py --spec ./api-docs-26.9.json \
+        --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json \
+        --overlay spec-overlays/ccc-26.9-ad-group-views-body.json
     ELISITY_API_SPEC=./api-docs-26.7.json python3 generate_commands.py
 """
 
 import argparse
+import copy
 import json
 import os
 import re
@@ -37,6 +41,44 @@ DEFAULT_OUTPUT_DIR = Path(__file__).parent / "src" / "elisity_cli" / "commands"
 # commands/__init__.py's COMMAND_GROUPS. Dropping them here would silently
 # unregister `elisity reporting` / `elisity glossary` from the CLI.
 HANDCODED_GROUPS = ("glossary", "reporting")
+
+DEVICE_PATH = "/api/identity-graph/v1/devices/{id}"
+
+# Operations the CLI does not generate commands for.
+#
+# An entry maps the omitted operation to the operation that replaces it, or to
+# None when nothing does. The device PUT is replaced by the PATCH: PUT replaces
+# the device's IP and VEN, so an attribute-only body detaches a dynamically
+# attached device. Generation fails when a spec has an omitted operation but not
+# its replacement (assert_omitted_operations_replaced): the published CCC 26.9
+# spec declares the device PUT and no PATCH — the PATCH is a 26.9 hot patch — so
+# omitting the PUT without the spec overlay would silently drop
+# `devices update-device`.
+#
+# The None entries are platform-internal operations (Virtual Edge reporting and
+# platform maintenance). They are not part of the customer-facing API, so the
+# CLI exposes no command for them and nothing replaces them.
+OMITTED_OPERATIONS = {
+    ("put", DEVICE_PATH): ("patch", DEVICE_PATH),
+    ("post", "/api/identity-graph/v1/devices/attach"): None,
+    ("post", "/api/identity-graph/v1/devices/attached"): None,
+    ("post", "/api/identity-graph/v1/workloads/attach"): None,
+    ("post", "/api/identity-graph/v1/workloads/attached"): None,
+    ("post", "/api/flows/v1/flows"): None,
+    ("post", "/flow/api/flowdata"): None,
+    ("post", "/flow/api/appflowdata"): None,
+    ("post", "/api/policy/v1/state/resync"): None,
+}
+
+# Spec overlays add operations a tenant serves but its published spec does not
+# declare yet. Each is checked in with its provenance and applied with
+# `--overlay`; see apply_overlays().
+SPEC_OVERLAY_DIR = Path(__file__).parent / "spec-overlays"
+
+# The JSON body a command sends when the user passes neither --body nor
+# --body-file. Only overlays set it: the 26.9 spec declares the AD group views
+# bodiless, and the server answers a POST without a body with 400.
+DEFAULT_BODY_KEY = "x-elisity-default-body"
 
 # Map OpenAPI tags to CLI command group names
 #
@@ -221,6 +263,28 @@ TAG_TO_GROUP = {
     "Snapshot Schedules": "system",
     "Snapshots": "system",
     "Task Broker Config": "system",
+    # ------------------------------------------------------------------
+    # CCC 26.9 tags — every one is new; 26.9 renamed no existing tag.
+    # ------------------------------------------------------------------
+    # Sits beside "Security Profile": same rule-search/export surface, served
+    # by the policy service under /api/policy/v2/.
+    "Access Policy Security Profile": "policy",
+    # Azure onboarding is the same cloud-workload-discovery feature the 26.7
+    # Workloads / AWS Setup tags already keep in `devices` (see the note above
+    # them). The "Workload - Attach" operations are platform-internal and sit in
+    # OMITTED_OPERATIONS; the tag is mapped so the spec stays fully mapped.
+    "Azure Workload Discovery": "devices",
+    "Workload - Attach": "devices",
+    # Served under /api/identity-graph/v1/connectors/tanium/, configures a
+    # connector — so it lives with the connectors, not with the devices that
+    # the "/identity-graph/" path-prefix fallback would have picked.
+    "Tanium Sensor Mappings": "connectors",
+    # Distribution zones are a topology concept; the fallback would have put
+    # these two read-only calls in `devices` under the names `list`/`usage`.
+    "Workload Distribution Zones": "topology",
+    # Flow ingestion (/api/flows/v1/flows, /flow/api/*flowdata): platform-internal,
+    # in OMITTED_OPERATIONS; the tag is mapped so the spec stays fully mapped.
+    "ingest-controller": "flows",
 }
 
 GROUP_DESCRIPTIONS = {
@@ -335,13 +399,22 @@ DESTRUCTIVE_PATH_SEGMENTS = frozenset({
 # --confirm on these paths is meaningless.
 DRY_RUN_PATH_SEGMENTS = frozenset({"validate"})
 
+# Operations that destroy state although no path segment says so. Keyed by
+# (METHOD, path); keep this list short — the path rule above is the norm.
+DESTRUCTIVE_OPERATIONS = frozenset({
+    # CCC 26.9 `ad set-groups-default-enabled`: the spec calls it a "master
+    # reset" of the enable-all-groups default.
+    ("PUT", "/api/ad-connector-service/v1/groups/default-enabled"),
+})
+
 
 def is_destructive_operation(method: str, path: str) -> bool:
     """Does this operation need the --confirm gate?
 
     True for every DELETE (kept as a floor — the README, AGENTS.md and the
     user guide have always promised it, and narrowing it would be a silent
-    behaviour regression), plus any verb whose path names a destructive action.
+    behaviour regression), plus any verb whose path names a destructive action,
+    plus the few operations listed in DESTRUCTIVE_OPERATIONS.
 
     This predicate is the single definition of "destructive" in the project.
     `tools/audit_counts.py` imports it to build its coverage denominator rather
@@ -349,7 +422,7 @@ def is_destructive_operation(method: str, path: str) -> bool:
     different set than the gate enforces is how "100% covered" stayed true while
     ten destructive commands sat ungated.
     """
-    if method.upper() == "DELETE":
+    if method.upper() == "DELETE" or (method.upper(), path) in DESTRUCTIVE_OPERATIONS:
         return True
     segments = {s for s in path.split("/") if s and not s.startswith("{")}
     if segments & DRY_RUN_PATH_SEGMENTS:
@@ -428,14 +501,105 @@ def resolve_parameter_names(method: str, path_params: list, query_params: list,
     return resolved_path, resolved_query
 
 
+# Per-operation command names, keyed by (METHOD, path) because the path is
+# stable across releases while operationIds are not. Used only where the
+# operationId yields a name that is generic in its group (`list`, `usage`,
+# `export`), carries a dedupe suffix (`-post`), or would take a shipped name.
+#
+# Regenerating the 26.7 spec with this map changes exactly one command: the
+# suppression-list GET (`get-users` in 26.7) becomes `search-suppression-list`.
+# Every other path below is new in CCC 26.9 (the device PATCH via the 26.9
+# hot-patch overlay). assert_overrides_emitted() fails generation if a
+# collision would make dedupe_command_names() suffix one of these names.
+COMMAND_NAME_OVERRIDES = {
+    # ENG-31333: the device PATCH (omitted ip/venId keep the current value)
+    # takes the `update-device` name; the PUT is in OMITTED_OPERATIONS.
+    ("PATCH", DEVICE_PATH): "update-device",
+    # Suppression List: 26.9 renamed the GET's operationId getUsers -> search
+    # (which would ship as `devices search`) and added an export with
+    # operationId `export`. `get-users` never fit — it lists suppression
+    # entries, not users — and 26.9 makes `filters` required, so the old
+    # invocation breaks whatever the name.
+    ("GET", "/api/identity-graph/v1/suppression"): "search-suppression-list",
+    ("POST", "/api/identity-graph/v1/suppression/export"): "export-suppression-list",
+    # Workload Distribution Zones (operationIds `list_2` and `usage`).
+    ("GET", "/api/identity-graph/v1/workload-distribution-zones"):
+        "list-workload-distribution-zones",
+    ("GET", "/api/identity-graph/v1/workload-distribution-zones/{id}/usage"):
+        "get-workload-distribution-zone-usage",
+    # Azure Workload Discovery shares `devices` with the 26.7 AWS discovery
+    # commands (validate-permissions-pre-creation, list-available-regions, ...);
+    # without `azure` in the name two of these collided and got `-post`.
+    ("GET", "/api/identity-graph/workloads/discovery/azure/setup/permissions"):
+        "list-azure-required-permissions",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/regions"):
+        "list-azure-regions-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/resource-groups"):
+        "list-azure-resource-groups-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/scope-preview"):
+        "preview-azure-scope-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/subscriptions"):
+        "list-azure-subscriptions-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/validate-connection"):
+        "validate-azure-connection-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/validate-permissions"):
+        "validate-azure-permissions-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/validate-region-permissions"):
+        "validate-azure-region-permissions-pre-creation",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/regions"):
+        "list-azure-regions-existing",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/resource-groups"):
+        "list-azure-resource-groups-existing",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/scope-preview"):
+        "preview-azure-scope-existing",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/subscriptions"):
+        "list-azure-subscriptions-existing",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/validate-connection"):
+        "validate-azure-connection-existing",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/validate-permissions"):
+        "validate-azure-permissions-existing",
+    ("POST", "/api/identity-graph/workloads/discovery/azure/{connectorId}/{endpointId}/validate-region-permissions"):
+        "validate-azure-region-permissions-existing",
+    # Tanium Sensor Mappings land in `connectors`, next to every other
+    # connector, where `fetch-catalog` / `probe-mapping` say nothing.
+    ("POST", "/api/identity-graph/v1/connectors/tanium/sensors"):
+        "fetch-tanium-sensor-catalog",
+    ("POST", "/api/identity-graph/v1/connectors/tanium/sensors/detail"):
+        "fetch-tanium-sensor-detail",
+    ("POST", "/api/identity-graph/v1/connectors/tanium/sensor-mappings/probe"):
+        "probe-tanium-sensor-mapping",
+    # Access Policy Security Profile v2 sits beside the Security Profile v2
+    # search/export commands; `search-profiles` / `export-rules` would not say
+    # which profile type.
+    ("POST", "/api/policy/v2/access-policy-security-profiles/search"):
+        "search-access-policy-security-profiles",
+    ("POST", "/api/policy/v2/access-policy-security-profiles/export"):
+        "export-access-policy-security-profiles",
+    ("POST", "/api/policy/v2/access-policy-security-profiles/{id}/rules/search"):
+        "search-access-policy-security-profile-rules",
+    ("POST", "/api/policy/v2/access-policy-security-profiles/{id}/rules/export"):
+        "export-access-policy-security-profile-rules",
+    # AD Group "enable all groups by default" toggle.
+    ("GET", "/api/ad-connector-service/v1/groups/default-enabled"):
+        "get-groups-default-enabled",
+    ("PUT", "/api/ad-connector-service/v1/groups/default-enabled"):
+        "set-groups-default-enabled",
+}
+
+
 def make_command_name(method: str, op_id: str, path: str, tag: str) -> str:
     """Generate a human-friendly command name from operation context.
 
-    Falls back to method + last path segment when there is no operationId, or
-    when the operationId sanitizes to nothing (e.g. an id of only punctuation).
-    Without that second check the command would be registered under an empty
-    name and be impossible to invoke — a silently lost command.
+    COMMAND_NAME_OVERRIDES wins outright. Otherwise the name comes from the
+    operationId, falling back to method + last path segment when there is no
+    operationId, or when the operationId sanitizes to nothing (e.g. an id of
+    only punctuation). Without that second check the command would be
+    registered under an empty name and be impossible to invoke — a silently
+    lost command.
     """
+    override = COMMAND_NAME_OVERRIDES.get((method.upper(), path))
+    if override:
+        return override
     name = sanitize_name(op_id) if op_id else ""
     if not name:
         name = f"{method.lower()}-{sanitize_name(path.split('/')[-1])}"
@@ -549,6 +713,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     path_params, query_params = extract_params(op)
     path_params = merge_path_templates(path, path_params)
     has_body = has_request_body(op)
+    has_default_body = DEFAULT_BODY_KEY in op
+    if has_default_body and not has_body:
+        raise ValueError(f"{DEFAULT_BODY_KEY} needs a requestBody to default")
     is_ndjson = produces_ndjson(op)
     raw_summary = op.get("summary", op.get("description", "")) or f"{method.upper()} {path}"
     summary = raw_summary.split("\n")[0].replace('"', '\\"').replace("\\", "\\\\")[:120]
@@ -589,7 +756,11 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
             lines.append(f'@click.option("{q["flag"]}", "{q["dest"]}", type={click_type}, default={default_str}, help="{help_str}")')
 
     # Request body as --data JSON option
-    if has_body:
+    if has_default_body:
+        default_json = json.dumps(op[DEFAULT_BODY_KEY]).replace('"', '\\"')
+        lines.append(f'@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string (default: {default_json})")')
+        lines.append('@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")')
+    elif has_body:
         lines.append('@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")')
         lines.append('@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")')
 
@@ -645,7 +816,7 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
 
     # Handle request body
     if has_body:
-        lines.append("    body = None")
+        lines.append(f"    body = {op[DEFAULT_BODY_KEY]!r}" if has_default_body else "    body = None")
         lines.append("    if body_file:")
         lines.append("        import json as _json")
         lines.append("        with open(body_file) as f:")
@@ -675,9 +846,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
             lines.append("        result = client.put(endpoint, params=params)")
     elif method_lower == "patch":
         if has_body:
-            lines.append("        result = client.patch(endpoint, data=body)")
+            lines.append("        result = client.patch(endpoint, data=body, params=params)")
         else:
-            lines.append("        result = client.patch(endpoint)")
+            lines.append("        result = client.patch(endpoint, params=params)")
     elif method_lower == "delete":
         if has_body:
             lines.append("        result = client.delete(endpoint, params=params, data=body)")
@@ -843,6 +1014,8 @@ def build_groups(spec: dict) -> tuple:
         group_name, matched_by = resolve_group(tags, path)
         if matched_by == "path-prefix":
             unmapped.append((tags, method, path))
+        if (method, path) in OMITTED_OPERATIONS:
+            continue
         cmd_name = make_command_name(method, op_id, path, tags[0])
         groups[group_name].append((method, path, op, cmd_name))
 
@@ -910,6 +1083,179 @@ def assert_every_tag_mapped(spec: dict) -> None:
     raise SystemExit("\n".join(lines))
 
 
+def assert_overrides_emitted(groups: dict) -> None:
+    """Fail generation on any dedupe collision that involves an override name.
+
+    dedupe_command_names() resolves a collision by suffixing whichever command
+    comes second in spec order. If the override comes second, it ships as
+    `<name>-post`; if it comes first, the OTHER command — possibly a shipped
+    one — is pushed to the suffix instead, which is exactly what 26.9 did to
+    `devices attach`. Both directions fail here: any command whose name dedupe
+    changed, where the name it wanted is an override name in its group.
+    Overrides absent from the spec are ignored, so one map serves every spec
+    version.
+    """
+    wrong = []
+    for group_name, commands in groups.items():
+        override_names = {
+            COMMAND_NAME_OVERRIDES[(m.upper(), p)]
+            for m, p, _op, _name in commands
+            if (m.upper(), p) in COMMAND_NAME_OVERRIDES
+        }
+        for (method, path, _op, wanted), (_m, _p, _o, emitted) in zip(
+                commands, dedupe_command_names(commands)):
+            if wanted in override_names and emitted != wanted:
+                kind = ("override" if COMMAND_NAME_OVERRIDES.get((method.upper(), path)) == wanted
+                        else "command displaced by an override")
+                wrong.append(f"    {method.upper()} {path}: {kind} '{wanted}' "
+                             f"would be emitted as '{group_name} {emitted}'")
+    if wrong:
+        raise SystemExit(
+            "ERROR: command-name override(s) collide with another command in the "
+            "same group, so dedupe would rename them:\n" + "\n".join(wrong)
+            + "\nPick a unique name in COMMAND_NAME_OVERRIDES."
+        )
+
+
+def assert_omitted_operations_replaced(spec: dict) -> None:
+    """Fail generation if an omitted operation's replacement is missing.
+
+    OMITTED_OPERATIONS drops an operation either because another one replaces
+    it or because it is platform-internal (value None). For the first kind, a
+    spec that has the omitted operation but not the replacement would lose the
+    command outright — the published 26.9 spec has the device PUT and no PATCH,
+    so `devices update-device` would vanish while the count still looked
+    plausible. Entries with no replacement are omitted unconditionally.
+    """
+    paths = spec.get("paths") or {}
+    missing = [
+        (omitted, replacement)
+        for omitted, replacement in OMITTED_OPERATIONS.items()
+        if replacement is not None
+        and omitted[0] in (paths.get(omitted[1]) or {})
+        and replacement[0] not in (paths.get(replacement[1]) or {})
+    ]
+    if missing:
+        overlays = sorted(p.name for p in SPEC_OVERLAY_DIR.glob("*.json"))
+        raise SystemExit(
+            "ERROR: the spec has an operation the CLI omits, but not the one that "
+            "replaces it:\n"
+            + "\n".join(f"    {o[0].upper()} {o[1]} is omitted in favour of "
+                        f"{r[0].upper()} {r[1]}, which this spec does not declare"
+                        for o, r in missing)
+            + "\nApply the spec overlay for this release with --overlay "
+            f"(available in {SPEC_OVERLAY_DIR.name}/: {', '.join(overlays) or 'none'})."
+        )
+
+
+def load_overlay(overlay_path) -> dict:
+    """Load a spec overlay, failing with an actionable message."""
+    try:
+        with open(overlay_path) as f:
+            overlay = json.load(f)
+    except FileNotFoundError:
+        raise SystemExit(f"ERROR: spec overlay not found at {overlay_path}")
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"ERROR: {overlay_path} is not valid JSON — {e}")
+    if not overlay.get("provenance") or not isinstance(overlay.get("operations"), list):
+        raise SystemExit(f"ERROR: {overlay_path} needs a 'provenance' and an 'operations' list")
+    for i, entry in enumerate(overlay["operations"]):
+        missing = [k for k in ("path", "method") if not entry.get(k)]
+        if not entry.get("cloneFrom") and not entry.get("patch"):
+            missing.append("cloneFrom or patch")
+        if missing:
+            raise SystemExit(f"ERROR: {overlay_path} operation #{i} is missing {', '.join(missing)}")
+        if entry.get("cloneFrom") and entry.get("patch"):
+            raise SystemExit(f"ERROR: {overlay_path} operation #{i} has both cloneFrom and patch; "
+                             "use cloneFrom to add an operation, patch to change one")
+        if entry.get("patch") and not isinstance(entry["patch"], dict):
+            raise SystemExit(f"ERROR: {overlay_path} operation #{i} patch must be an object")
+    return overlay
+
+
+def _patch_operation(ops: dict, path: str, method: str, patch: dict,
+                     provenance: str, overlay_path) -> list:
+    """Fill the keys of `patch` that the operation leaves empty; return notes."""
+    name = Path(overlay_path).name
+    if method not in ops:
+        raise SystemExit(
+            f"ERROR: overlay {overlay_path} patches {method.upper()} {path}, "
+            "which this spec does not declare. The overlay does not fit this spec."
+        )
+    op = ops[method]
+    notes = []
+    filled = []
+    for key, value in patch.items():
+        if op.get(key) is not None:
+            notes.append(f"overlay {name}: {method.upper()} {path} already declares "
+                         f"{key}; the spec's definition is used")
+            continue
+        op[key] = copy.deepcopy(value)
+        filled.append(key)
+    if filled:
+        op["x-elisity-overlay"] = provenance
+        notes.append(f"overlay {name}: set {', '.join(filled)} on {method.upper()} {path} "
+                     f"({provenance})")
+    return notes
+
+
+def apply_overlays(spec: dict, overlay_paths) -> tuple:
+    """Return (spec with the overlays applied, notes).
+
+    An overlay operation either adds an operation or patches one:
+
+    - `{"path", "method", "cloneFrom", "set"}` adds: the operation `cloneFrom`
+      at the same path is copied, `set` replaces top-level keys of the copy,
+      and the result is added as `method`. An operation the spec already
+      declares is left alone: the published spec has caught up and wins.
+    - `{"path", "method", "patch"}` changes an existing operation: each key in
+      `patch` is set only where the spec leaves it empty (missing or null). A
+      key the spec already defines keeps the spec's value, with a note.
+
+    Changed or added operations carry `x-elisity-overlay` with the overlay's
+    provenance. An entry whose target (`cloneFrom`, or the patched operation)
+    is missing fails generation — it no longer fits the spec. The input spec
+    is not modified.
+    """
+    if not overlay_paths:
+        return spec, []
+    spec = copy.deepcopy(spec)
+    paths = spec.setdefault("paths", {})
+    notes = []
+    for overlay_path in overlay_paths:
+        overlay = load_overlay(overlay_path)
+        for entry in overlay["operations"]:
+            path, method = entry["path"], entry["method"].lower()
+            ops = paths.get(path) or {}
+            if entry.get("patch"):
+                notes.extend(_patch_operation(ops, path, method, entry["patch"],
+                                              overlay["provenance"], overlay_path))
+                continue
+            source = entry["cloneFrom"].lower()
+            if method in ops:
+                notes.append(f"overlay {Path(overlay_path).name}: {method.upper()} {path} "
+                             "is already in the spec; the spec's definition is used")
+                continue
+            if source not in ops:
+                raise SystemExit(
+                    f"ERROR: overlay {overlay_path} clones {source.upper()} {path}, "
+                    "which this spec does not declare. The overlay does not fit this spec."
+                )
+            op = copy.deepcopy(ops[source])
+            op.update(copy.deepcopy(entry.get("set") or {}))
+            op["x-elisity-overlay"] = overlay["provenance"]
+            # Inserted right after the operation it was cloned from, so command
+            # order in the generated module matches a spec that declares it.
+            paths[path] = {}
+            for m, o in ops.items():
+                paths[path][m] = o
+                if m == source:
+                    paths[path][method] = op
+            notes.append(f"overlay {Path(overlay_path).name}: added {method.upper()} {path} "
+                         f"({overlay['provenance']})")
+    return spec, notes
+
+
 def _sample_path_for_tag(spec: dict, tag: str) -> str:
     """First path carrying `tag`, so the guard can show the fallback's choice."""
     for path, method, op, tags, op_id in iter_operations(spec):
@@ -949,6 +1295,15 @@ def main(argv=None):
              f"then {DEFAULT_SPEC_PATH})",
     )
     parser.add_argument(
+        "--overlay",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Spec overlay to apply before generating (repeatable). CCC 26.9 needs "
+             f"{SPEC_OVERLAY_DIR.name}/ccc-26.9-hotpatch-device-patch.json and "
+             f"{SPEC_OVERLAY_DIR.name}/ccc-26.9-ad-group-views-body.json",
+    )
+    parser.add_argument(
         "--output-dir",
         default=None,
         help=f"Directory to write command modules into (default: {DEFAULT_OUTPUT_DIR})",
@@ -961,14 +1316,18 @@ def main(argv=None):
     print(f"Spec:   {spec_path}")
     print(f"Output: {output_dir}")
 
-    spec = load_spec(spec_path)
+    spec, overlay_notes = apply_overlays(load_spec(spec_path), args.overlay)
+    for note in overlay_notes:
+        print(f"Spec overlay: {note}")
 
     # Refuse to generate from a spec with unmapped tags — see the guard's
     # docstring. Checked before build_groups() so the failure names the tags
     # rather than emitting quietly-misrouted modules.
     assert_every_tag_mapped(spec)
+    assert_omitted_operations_replaced(spec)
 
     groups, unmapped = build_groups(spec)
+    assert_overrides_emitted(groups)
 
     # A spec tag must never be allowed to overwrite a hand-coded module.
     collisions = sorted(set(groups) & set(HANDCODED_GROUPS))

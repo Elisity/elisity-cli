@@ -1,6 +1,6 @@
 # Getting Started with the Elisity CCC CLI
 
-The Elisity CCC CLI is a command-line interface to the Elisity Cloud Control Center API. It provides 441 commands across 10 command groups covering topology, policy, devices, connectors, AD/Entra integration, traffic flows, insights, and system operations.
+The Elisity CCC CLI is a command-line interface to the Elisity Cloud Control Center API. It provides 650 commands across 12 command groups covering topology, policy, devices, connectors, AD/Entra integration, traffic flows, insights, reporting, and system operations. The command set is generated from the CCC 26.9 OpenAPI spec.
 
 This guide walks you through installation, configuration, authentication, and your first commands.
 
@@ -300,20 +300,22 @@ elisity devices get-devices-view --body '{"pageable":{"page":0,"size":10}}' \
 
 ## Explore Available Commands
 
-The CLI is organized into 10 command groups:
+The CLI is organized into 12 command groups:
 
 | Group | Description | Commands |
 |-------|-------------|----------|
-| `topology` | Sites, zones, VE groups, VEs, VENs, flow exporters | 116 |
-| `policy` | Policy sets, rules, service groups, identity groups | 116 |
-| `ad` | Active Directory and Entra ID integration | 61 |
-| `devices` | Device identity, enrichment, CRUD, bulk operations | 59 |
-| `insights` | Analytics, dashboards, metrics | 30 |
-| `connectors` | Connector management and configuration | 22 |
-| `flows` | Traffic flow monitoring and analysis | 18 |
-| `system` | System operations, health, licensing | 12 |
+| `policy` | Policy sets, policies, policy groups, security profiles, labels, access policy (LPA) | 191 |
+| `topology` | Sites, distribution zones, VE groups, VEs, VENs, flow exporters | 158 |
+| `devices` | Device identity, enrichment, CRUD, bulk operations, cloud workloads (AWS, Azure) | 107 |
+| `ad` | Active Directory and Entra ID integration | 57 |
+| `connectors` | Connector management and configuration, Tanium sensor mappings | 38 |
+| `insights` | Policy suggestions, dynamic/network group recommendations | 31 |
+| `system` | Tasks, specs, state sync, report snapshots + schedules | 31 |
+| `flows` | Traffic flow search, device state, noise definitions, flow ingestion | 18 |
+| `reporting` | GraphQL dashboard data — Zero Trust scores, site KPIs, threat vectors | 17 |
 | `config` | CLI profile and configuration management | 4 |
 | `auth` | Authentication test, token, whoami | 3 |
+| `glossary` | Map Elisity UI terminology to CLI commands | 3 |
 
 ### Use `--help` at any level
 
@@ -342,4 +344,4 @@ elisity --debug topology get-all-sites
 
 - **[User Guide](user-guide.md)** — Detailed usage patterns, scripting recipes, and advanced workflows
 - **[Configuration Reference](configuration.md)** — Profile options, environment variables, SSL settings
-- **[Command Reference](command-reference.md)** — Full list of all 441 commands with parameters and examples
+- **[Command Reference](command-reference.md)** — Full list of all 650 commands with parameters and examples

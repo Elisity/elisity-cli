@@ -324,7 +324,9 @@ def render(diff: dict, version: str, source: str, baseline: str) -> str:
         w("None.")
     else:
         w(
-            f"These {len(removed)} commands are gone because the operation was removed "
+            ("This command is gone" if len(removed) == 1
+             else f"These {len(removed)} commands are gone")
+            + " because the operation was removed "
             "from the CCC spec. Any script invoking one will now fail with "
             "`No such command`. Commands whose underlying *path* moved are not "
             "listed here — they still exist, and are under "

@@ -407,7 +407,7 @@ def cmd_update(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -438,7 +438,7 @@ def cmd_rename(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -469,7 +469,7 @@ def cmd_move(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.patch(endpoint, data=body)
+        result = client.patch(endpoint, data=body, params=params)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -1879,6 +1879,134 @@ def cmd_delete_1(ctx, id, cmd_fmt, cmd_query, confirm):
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
+@group.command("search-security-rules")
+@click.argument("id")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_search_security_rules(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
+    """Search, filter and page the Security Rules of one Security Profile"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/security-profiles/{id}/rules/search"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("export-security-rules")
+@click.argument("id")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_export_security_rules(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
+    """Generate a CSV export of one Security Profile's rules"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/security-profiles/{id}/rules/export"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("search-security-profiles")
+@click.option("--excludeReflections", "excludeReflections", type=bool, default=False, help="excludeReflections")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_search_security_profiles(ctx, excludeReflections, body_data, body_file, cmd_fmt, cmd_query):
+    """Search, filter and page Security Profiles"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/security-profiles/search"
+    params = {}
+    if excludeReflections is not None:
+        params["excludeReflections"] = excludeReflections
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("export-security-profiles")
+@click.option("--excludeReflections", "excludeReflections", type=bool, default=False, help="excludeReflections")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_export_security_profiles(ctx, excludeReflections, body_data, body_file, cmd_fmt, cmd_query):
+    """Generate a Security Profiles CSV export"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/security-profiles/export"
+    params = {}
+    if excludeReflections is not None:
+        params["excludeReflections"] = excludeReflections
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("get-policy-groups-summary")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
 @click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
@@ -2526,6 +2654,128 @@ def cmd_create_dynamic_policy_groups(ctx, body_data, body_file, cmd_fmt, cmd_que
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
+@group.command("search-access-policy-security-profile-rules")
+@click.argument("id")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_search_access_policy_security_profile_rules(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
+    """Search, filter and page the rules of one Access Policy Security Profile"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/access-policy-security-profiles/{id}/rules/search"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("export-access-policy-security-profile-rules")
+@click.argument("id")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_export_access_policy_security_profile_rules(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
+    """Generate a CSV export of one Access Policy Security Profile's rules"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/access-policy-security-profiles/{id}/rules/export"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("search-access-policy-security-profiles")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_search_access_policy_security_profiles(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Search, filter and page Access Policy Security Profiles"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/access-policy-security-profiles/search"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("export-access-policy-security-profiles")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_export_access_policy_security_profiles(ctx, body_data, body_file, cmd_fmt, cmd_query):
+    """Generate an Access Policy Security Profiles CSV export"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v2/access-policy-security-profiles/export"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("list-vendors")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
@@ -2559,56 +2809,6 @@ def cmd_create_vendor(ctx, body_data, body_file, cmd_fmt, cmd_query):
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/policy/v1/vendor"
-    params = None
-    body = None
-    if body_file:
-        import json as _json
-        with open(body_file) as f:
-            body = _json.load(f)
-    elif body_data:
-        import json as _json
-        body = _json.loads(body_data)
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, data=body, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
-@group.command("force-sync")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_force_sync(ctx, cmd_fmt, cmd_query):
-    """POST /api/policy/v1/state/resync"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/policy/v1/state/resync"
-    params = None
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
-@group.command("is-site-label-in-use")
-@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
-@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_is_site_label_in_use(ctx, body_data, body_file, cmd_fmt, cmd_query):
-    """Is Site Label used"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/policy/v1/site-labels/is-used"
     params = None
     body = None
     if body_file:
@@ -2984,6 +3184,69 @@ def cmd_create_policy_post(ctx, policysetid, body_data, body_file, cmd_fmt, cmd_
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
+@group.command("create-policy-review")
+@click.argument("policysetid")
+@click.argument("policyid")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_create_policy_review(ctx, policysetid, policyid, body_data, body_file, cmd_fmt, cmd_query):
+    """Record a completed configuration review for a Policy"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v1/policy-sets/{policysetid}/policies/{policyid}/review"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("search-policies-for-policy-set")
+@click.argument("policysetid")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_search_policies_for_policy_set(ctx, policysetid, body_data, body_file, cmd_fmt, cmd_query):
+    """Search and filter Policies in given Policy Set: filters in the JSON body"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v1/policy-sets/{policysetid}/policies/search"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
 @group.command("overwrite-policy")
 @click.argument("policysetid")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
@@ -3149,6 +3412,38 @@ def cmd_create_post_2(ctx, policysetid, body_data, body_file, cmd_fmt, cmd_query
     if cmd_query:
         ctx.query = cmd_query
     endpoint = f"/api/policy/v1/policy-sets/{policysetid}/access-policies"
+    params = None
+    body = None
+    if body_file:
+        import json as _json
+        with open(body_file) as f:
+            body = _json.load(f)
+    elif body_data:
+        import json as _json
+        body = _json.loads(body_data)
+    client = ctx.ensure_client()
+    try:
+        result = client.post(endpoint, data=body, params=params)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
+    render(result, ctx.format, ctx.query)
+
+@group.command("create-access-policy-review")
+@click.argument("policysetid")
+@click.argument("id")
+@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
+@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
+@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
+@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
+@pass_context
+def cmd_create_access_policy_review(ctx, policysetid, id, body_data, body_file, cmd_fmt, cmd_query):
+    """Record a completed configuration review for an Access Policy"""
+    if cmd_fmt:
+        ctx.format = cmd_fmt
+    if cmd_query:
+        ctx.query = cmd_query
+    endpoint = f"/api/policy/v1/policy-sets/{policysetid}/access-policies/{id}/review"
     params = None
     body = None
     if body_file:

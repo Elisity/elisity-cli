@@ -2,15 +2,15 @@
 
 [![tests](https://github.com/mkorenbaum/elisity-cli/actions/workflows/test.yml/badge.svg)](https://github.com/mkorenbaum/elisity-cli/actions/workflows/test.yml)
 
-Command-line interface to the Elisity Cloud Control Center (CCC) API. Provides complete coverage of the CCC API surface — all 583 REST endpoints from the OpenAPI spec, plus 17 hand-coded GraphQL commands for the `/api/reporting/v1/data` endpoint (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors) that the OpenAPI spec doesn't include, plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
+Command-line interface to the Elisity Cloud Control Center (CCC) API. Covers the customer-facing CCC API surface — all 623 REST endpoints from the OpenAPI spec that customers call (8 platform-internal operations are left out, see [Omitted operations](#omitted-operations)), plus 17 hand-coded GraphQL commands for the `/api/reporting/v1/data` endpoint (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors) that the OpenAPI spec doesn't include, plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
 
-Generated from the **CCC 26.7** OpenAPI spec. See [What changed in CCC 26.7](#what-changed-in-ccc-267) for the command-level delta.
+Generated from the **CCC 26.9 (hot-patched)** OpenAPI spec: the published 26.9 spec plus two checked-in overlays. One adds the device PATCH that 26.9 tenants are hot-patched to serve, so `devices update-device` sends **PATCH**. The other gives the three AD group views the JSON body the server requires and the spec omits. See [What changed in CCC 26.9](#what-changed-in-ccc-269) for the command-level delta, and [What changed in CCC 26.7](#what-changed-in-ccc-267) for the release before it.
 
 > **For AI agents:** see [docs/AGENTS.md](docs/AGENTS.md) for a UI-term → CLI-command operating guide. The `elisity glossary` group is the runtime lookup surface.
 
 ## Features
 
-- **610 commands** total (583 auto-generated from the CCC OpenAPI spec + 17 hand-coded GraphQL reporting commands + 7 CLI-native auth/config + 3 CLI-native glossary commands)
+- **650 commands** total (623 auto-generated from the CCC OpenAPI spec + 17 hand-coded GraphQL reporting commands + 7 CLI-native auth/config + 3 CLI-native glossary commands)
 - **Multi-profile configuration** — manage multiple CCC environments (prod, staging, lab)
 - **4 output formats** — JSON (default), table, YAML, CSV
 - **JMESPath filtering** — reshape and filter output with `-q` expressions
@@ -18,7 +18,7 @@ Generated from the **CCC 26.7** OpenAPI spec. See [What changed in CCC 26.7](#wh
 - **NDJSON support** — transparent parsing of newline-delimited JSON endpoints
 - **GraphQL reporting** — `reporting` group wraps the CCC dashboard's GraphQL queries (Zero Trust scores, site KPIs, threat vectors, traffic-by-PG/IP)
 - **UI-term glossary** — `glossary` group answers "what command runs the Zero Trust Score tile?" without guesswork
-- **Destructive-op safety** — `--confirm` required for all 67 destructive commands, classified by API path rather than HTTP verb (every DELETE, plus POST bulk deletes, PUT decommission, Insights reset/recreate)
+- **Destructive-op safety** — `--confirm` required for all 68 destructive commands, classified by API path rather than HTTP verb (every DELETE, plus POST bulk deletes, PUT decommission, Insights reset/recreate, and the AD groups "master reset")
 - **Retry with backoff** — automatic retry on connection errors and timeouts
 
 ## Quick Start
@@ -100,14 +100,14 @@ curl -H "Authorization: Bearer $TOKEN" https://your-ccc.idp01.elisity.io/api/top
 
 | Group | Commands | Description |
 |-------|----------|-------------|
-| `topology` | 154 | Sites, distribution zones, VE groups, VEs, VENs, flow exporters, cloud controllers, interface + topology settings |
-| `policy` | 181 | Policy sets, policies, policy groups, security profiles, site labels, label management, access policy (LPA), custom applications, vendors |
-| `devices` | 89 | Device CRUD, bulk operations, enrichment, suppression, custom attributes, cloud workloads + AWS discovery |
-| `ad` | 49 | Active Directory / Entra ID connectors, agents (V2), agent logs, subscription refresh |
-| `connectors` | 35 | Connector configuration, custom connector devices/inventory, import/export, connectivity |
+| `topology` | 158 | Sites, distribution zones, workload distribution zones, VE groups, VEs, VENs, VE/VEN metrics summaries, flow exporters, cloud controllers, interface + topology settings |
+| `policy` | 190 | Policy sets, policies, policy groups, security profiles + access policy security profiles (search/export), policy reviews, site labels, label management, access policy (LPA), custom applications, vendors |
+| `devices` | 103 | Device CRUD, bulk operations, enrichment, suppression list, custom attributes, cloud workloads + AWS and Azure discovery |
+| `ad` | 57 | Active Directory / Entra ID connectors, agents (V2), agent logs, subscription refresh, AD group enablement |
+| `connectors` | 38 | Connector configuration, custom connector devices/inventory, import/export, connectivity, Tanium sensor mappings |
 | `insights` | 31 | Policy suggestions, dynamic/network group recommendations |
 | `flows` | 15 | Traffic flow search, device state, noise definitions, device heatmap |
-| `system` | 29 | Tasks, specs, state sync, task broker config, report snapshots + schedules |
+| `system` | 31 | Tasks, specs, state sync, task broker config, report snapshots (PDF, Markdown, evidence) + schedules |
 | `reporting` | 17 | **GraphQL** — Zero Trust scores, site KPIs, threat vectors, traffic-by-PG/IP. Hand-coded (the CCC reporting API is GraphQL, not in OpenAPI). |
 | `glossary` | 3 | Map Elisity UI terminology to CLI commands |
 | `auth` | 3 | Test connection, get token, decode JWT |
@@ -207,12 +207,17 @@ python3 tests/qa_comprehensive.py
 
 The API-backed groups are generated from the CCC OpenAPI specification, pulled from a
 live tenant at `GET /v3/api-docs` (served unauthenticated). The current command set was
-generated from the **CCC 26.7** spec — OpenAPI 3.1.0, 441 paths / 583 operations —
-captured from `insights-demo.idp01.elisity.io` on 2026-08-05. The previous set came from
-the CCC 26.3-era spec (OpenAPI 3.0.1, 329 paths / 436 operations, captured 2026-06-21).
+generated from the **CCC 26.9** spec — OpenAPI 3.1.0, 487 paths / 631 operations —
+captured from `release-demos.idp02.elisity.io` (built on release-26.9.0, 2026-10-10) on
+2026-10-15, plus two 26.9 overlays: the hot-patch overlay (one operation, the device
+`PATCH`) and the AD group views body overlay (a request body for three operations); see
+[Spec overlays](#spec-overlays). The previous set came from the CCC 26.7 spec (OpenAPI 3.1.0, 441 paths / 583
+operations, captured from `insights-demo.idp01.elisity.io` on 2026-08-05), and the one
+before that from the CCC 26.3-era spec (OpenAPI 3.0.1, 329 paths / 436 operations,
+captured 2026-06-21).
 
-> **The spec carries no CCC version stamp.** `info.version` reads `1.0.0` in both 26.3
-> and 26.7 — that is the gateway API version and it does not track the CCC release. The
+> **The spec carries no CCC version stamp.** `info.version` reads `1.0.0` in 26.3, 26.7
+> and 26.9 — that is the gateway API version and it does not track the CCC release. The
 > CCC version above is cited from the tenant the spec was pulled from, so record that
 > provenance whenever you refresh the baseline.
 
@@ -237,17 +242,33 @@ fall back to a path-prefix guess and need an explicit mapping decision.
 # 2. Map any new tags in TAG_TO_GROUP (generate_commands.py), then regenerate.
 python3 generate_commands.py --spec new-api-docs.json
 
+# CCC 26.9 needs both of its overlays (see "Spec overlays" below). Pass the same
+# --overlay flags to spec_diff.py so the diff describes what the CLI ships.
+python3 generate_commands.py --spec api-docs-26.9.json \
+    --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json \
+    --overlay spec-overlays/ccc-26.9-ad-group-views-body.json
+
 # The spec path resolves as: --spec > $ELISITY_API_SPEC > the historical host path
 ELISITY_API_SPEC=new-api-docs.json python3 generate_commands.py
 
 # 3. Regenerate the changelog section of this README from the same diff.
-python3 tools/gen_changelog.py --diff diff.json --version 26.8 \
-    --source your-tenant.idp01.elisity.io --baseline 26.7
+python3 tools/gen_changelog.py --diff diff.json --version 26.10 \
+    --source your-tenant.idp01.elisity.io --baseline 26.9
 
-# 4. Confirm counts, the delete gate, and the docs all still agree.
+# 4. Refresh the committed naming skeleton, so the naming guards run in CI
+#    (the full specs are not committed).
+python3 tools/spec_skeleton.py new-api-docs.json --source your-tenant.idp01.elisity.io \
+    > tests/data/ccc-26.10-operations.json
+
+# 5. Confirm counts, the delete gate, and the docs all still agree.
 python3 tools/audit_counts.py
 pytest
 ```
+
+The test that regenerates from the 26.9 spec and compares the result byte-for-byte with
+the committed modules needs the full spec, which is not committed; without it the test
+skips. Set `ELISITY_REQUIRE_SPECS=1` wherever the specs are staged (a release check, a
+regeneration) and a missing spec fails the run instead of skipping.
 
 **The generator refuses to run if any spec tag has no `TAG_TO_GROUP` entry**, printing
 each unmapped tag, its operation count, and the group the path-prefix fallback would
@@ -265,6 +286,36 @@ non-zero when `README.md` or `docs/command-reference.md` disagree with the sourc
 documentation drift fails CI instead of accumulating. It is also enforced from the test
 suite (`tests/test_command_invariants.py`).
 
+#### Spec overlays
+
+A tenant can serve an operation its published spec does not declare yet — CCC 26.9
+tenants are hot-patched to serve `PATCH /api/identity-graph/v1/devices/{id}`
+(ENG-31142), which the 26.9 spec predates. `spec-overlays/*.json` add such operations at
+generation time. Each file records its `provenance` and lists operations as
+`{"path", "method", "cloneFrom", "set"}`: the generator copies the `cloneFrom`
+operation at that path, replaces the keys in `set`, marks the copy with
+`x-elisity-overlay`, and adds it. If the spec already declares the operation, the
+spec's definition wins and the overlay entry is skipped with a note; if the operation
+it clones is missing, generation fails.
+
+An overlay can also correct an operation the spec declares wrongly. An entry
+`{"path", "method", "patch"}` sets each key in `patch` on that existing operation, but
+only where the spec leaves the key missing or `null`; a key the spec defines keeps the
+spec's value, with a note. If the operation is missing, generation fails. An entry has
+either `cloneFrom` or `patch`, never both. CCC 26.9 declares the three AD group views
+(`getGroupsView`, `getGroupUsers`, `getGroupDevices`) with `requestBody: null`, but the
+server answers a POST without a body with 400.
+[`spec-overlays/ccc-26.9-ad-group-views-body.json`](spec-overlays/ccc-26.9-ad-group-views-body.json)
+gives each one an optional `application/json` object body, plus
+`x-elisity-default-body: {}`: the generated command sends `{}` when neither `--body` nor
+`--body-file` is given. Only overlays set `x-elisity-default-body`. Delete this overlay
+once the published spec declares the bodies.
+
+The CLI omits the device `PUT` (`OMITTED_OPERATIONS`) because the `PATCH` replaces it.
+Generation fails when a spec has an omitted operation but not its replacement, so
+regenerating 26.9 without the overlay is an error, not a CLI that has quietly lost
+`update-device`. Delete the overlay once the published spec declares the PATCH.
+
 Two invariants are enforced mechanically because a bulk regeneration is too large to
 review by eye:
 
@@ -272,7 +323,7 @@ review by eye:
   DELETE. The denominator is derived from the API path (`is_destructive_operation()` in
   `generate_commands.py`, the single definition in the project) and re-derived from the
   shipped source by the audit, so the gate and the metric cannot measure different sets.
-  Coverage is asserted at 100% over 67 commands; a regression names the offending
+  Coverage is asserted at 100% over 68 commands; a regression names the offending
   commands. A command whose *name* reads destructive while its path does not classify is
   also a failure until a human rules on it in `NON_DESTRUCTIVE_DESPITE_NAME` — three
   entries today, all dry-run or resync operations.
@@ -280,6 +331,169 @@ review by eye:
   are not in the OpenAPI spec. Regeneration never rewrites their modules and always
   keeps them registered in `COMMAND_GROUPS`; the generator aborts if a spec tag is ever
   mapped onto one of them.
+
+## What changed in CCC 26.9
+
+The command set is generated from the CCC 26.9 OpenAPI spec, pulled from `release-demos.idp02.elisity.io`, with the 26.9 hot-patch overlay and the AD group views body overlay applied (see below). The previous set came from the 26.7 spec.
+
+Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15; that tenant was built on release-26.9.0 (2026-10-10). The spec itself carries no CCC version stamp (`info.version` is `1.0.0`).
+
+| | 26.7 | 26.9 |
+|---|---:|---:|
+| Spec paths | 441 | 487 |
+| Spec operations | 583 | 631 |
+| Hot-patch overlay operations | — | 1 |
+| Operations given a request body by overlay | — | 3 |
+| Operations omitted from the CLI (platform-internal) | — | 8 |
+| Generated REST commands | 583 | 623 |
+
+**44 commands added, 4 removed, 84 operations changed**, and `devices update-device` changed HTTP method.
+
+### `devices update-device` sends PATCH (26.9 hot patch)
+
+`elisity devices update-device <id>` now sends `PATCH /api/identity-graph/v1/devices/{id}` (ENG-31333). The CLI no longer has a command for the device `PUT`.
+
+- **Why.** PUT replaces the device's IP and VEN, so an attribute-only body detached a dynamically attached device. With PATCH, an omitted, `null` or empty `ip` / `venId` keeps the current value, and attributes merge into the target enrichment layer. Same permission and `If-Match` precondition as PUT; returns 204.
+- **Which tenants.** `update-device` needs a CCC 26.9 tenant with the ENG-31142 hot patch (Elisity/ccc PR #17262), or a later release that ships the PATCH. It fails, most likely with 405 Method Not Allowed, on CCC 26.7 tenants (the 26.7 spec has only PUT and DELETE at that path) and on 26.9 tenants without the hot patch. There is no PUT fallback, so check the tenant's release before you rely on it.
+- **Where the PATCH comes from.** The published 26.9 spec predates the hot patch and declares only `PUT` and `DELETE` at that path. The generator adds the PATCH from [`spec-overlays/ccc-26.9-hotpatch-device-patch.json`](spec-overlays/ccc-26.9-hotpatch-device-patch.json), cloned from the PUT (parameters, request body), with its provenance recorded in the overlay. Without `--overlay` the generator refuses the 26.9 spec rather than silently dropping `update-device`.
+- `--target-enrichment-layer` now reaches the request: generated PATCH commands pass query parameters through.
+- The overlay makes `spec_diff.py` list the PATCH as an added `devices update-device`. It is not new: the command existed and now uses a different method, so it is not counted in the 49 additions below.
+
+### Omitted operations
+
+Eight operations in the 26.9 spec are internal to the platform (Virtual Edge reporting and platform maintenance) and are not part of the customer-facing API. The CLI generates no command for them. They are listed with no replacement in `OMITTED_OPERATIONS` (`generate_commands.py`):
+
+- `POST /api/identity-graph/v1/devices/attach` and `.../devices/attached` (previously `devices attach` / `devices attached`)
+- `POST /api/identity-graph/v1/workloads/attach` and `.../workloads/attached` (new in 26.9)
+- `POST /api/flows/v1/flows`, `POST /flow/api/flowdata` and `POST /flow/api/appflowdata` (new in 26.9)
+- `POST /api/policy/v1/state/resync` (previously `policy force-sync`)
+
+The three that had commands before are listed under [Removed commands](#removed-commands-breaking).
+
+**`ad set-groups-default-enabled` requires `--confirm`.** The spec calls it a "master reset" of the enable-all-groups default, so it is gated like the other destructive commands (68 in total).
+
+### AD group views send a JSON body
+
+`elisity ad get-groups-view`, `ad get-group-users <id>` and `ad get-group-devices <id>` send the JSON body `{}` (with `Content-Type: application/json`) when you give neither `--body` nor `--body-file`. Both flags are accepted. `elisity ad get-groups-view --size 5` works with no other arguments.
+
+- **Why.** The 26.9 spec declares these three POSTs with no request body, so without a fix the CLI sent none, and the server rejects a bodiless POST: on a 26.9.0 tenant, `POST /api/ad-connector-service/v1/groups?size=5` returned 400 with no body and 200 with `{}` (2026-10-15).
+- **Where the body comes from.** [`spec-overlays/ccc-26.9-ad-group-views-body.json`](spec-overlays/ccc-26.9-ad-group-views-body.json) patches the three operations (see [Spec overlays](#spec-overlays)). No other command sends a body you did not give; the other bodiless POST/PUT operations in 26.9 are actions and stay bodiless.
+
+### Removed commands (breaking)
+
+Four commands are gone: one because the operation was removed from the CCC spec, three because their operations are internal to the platform and are now omitted from the CLI (see [Omitted operations](#omitted-operations)). Any script invoking one will now fail with `No such command`. Commands whose underlying *path* moved are not listed here — they still exist, and are under [Changed command signatures](#changed-command-signatures).
+
+**site-label-controller** (1)
+
+- `elisity policy is-site-label-in-use` — Is Site Label used
+
+**Omitted as platform-internal** (3)
+
+- `elisity devices attach` — `POST /api/identity-graph/v1/devices/attach`
+- `elisity devices attached` — `POST /api/identity-graph/v1/devices/attached`
+- `elisity policy force-sync` — `POST /api/policy/v1/state/resync`
+
+
+
+### Changed command signatures
+
+5 commands changed shape — a renamed command or a changed flag can break an existing script.
+
+**`devices`**
+
+- `elisity devices search-suppression-list` — renamed from `get-users`; new required `--filters` (object). CCC 26.9 renamed the operationId `getUsers` -> `search`; the CLI names it after what it lists (suppression-list entries, not users) instead of shipping a bare `devices search`.
+
+**`system`**
+
+- `elisity system retrieve-snapshot-pdf` — renamed from `retrieve-snapshot-image`
+- `elisity system search-snapshot-schedules` — new optional `--source` (string); dropped `--dashboard`
+- `elisity system search-snapshots` — new optional `--source` (string); dropped `--dashboard`
+
+**`topology`**
+
+- `elisity topology get-all-distribution-zones` — new optional `--includeWorkload` (boolean)
+
+
+### Changed request bodies
+
+25 commands take a different request body. The command's flags are unchanged — the body is passed as opaque JSON via `--body` / `--body-file` — but the JSON you send must match the new schema.
+
+- **`ad`** — `save-ad-agent-config`
+- **`devices`** — `validate-permissions-pre-creation`
+- **`policy`** — `bulk-create`, `create`, `create-dynamic-policy-group`, `create-dynamic-policy-groups`, `create-policy`, `create-policy-post`, `create-security-profile`, `create-security-profiles`, `export-policies-to-csv`, `overwrite-policy`, `update`, `update-dynamic-policy-group`
+- **`system`** — `create-snapshot-schedule`, `create-task`
+- **`topology`** — `create-distribution-zone`, `create-ven`, `metrics`, `metrics-post`, `register-ven`, `update-distribution-zone`, `update-global-interfaces-settings`, `update-interfaces-settings`, `update-ven`
+
+
+A further 54 operations changed only in their response schema or status codes. Invocation is unaffected, so they are not listed.
+
+### Added commands
+
+44 new commands, grouped by CLI group.
+
+Where the operationId gave a name that was generic in its group (`devices list`, `devices usage`, `devices export`), carried a dedupe suffix (`validate-permissions-pre-creation-post`), or took a shipped name, the CLI sets the name per operation in `COMMAND_NAME_OVERRIDES` (`generate_commands.py`).
+
+#### `ad` (+8)
+
+- `export-groups` — Generate groups export as XLSX
+- `get-group-devices` — Get devices that are direct members of a group
+- `get-group-users` — Get users that are direct members of a group
+- `get-groups-count` — Get groups count
+- `get-groups-default-enabled` — Get the 'enable all groups by default' toggle
+- `get-groups-view` — Get groups view
+- `set-groups-default-enabled` — Set the 'enable all groups by default' toggle (master reset)
+- `set-groups-enabled` — Enable or disable one or many groups
+
+#### `connectors` (+3)
+
+- `fetch-tanium-sensor-catalog` — Fetch the Tanium sensor catalog
+- `fetch-tanium-sensor-detail` — Look up one Tanium sensor by exact name
+- `probe-tanium-sensor-mapping` — Probe a draft sensor mapping
+
+#### `devices` (+16)
+
+- `export-suppression-list` — Export entries as CSV
+- `list-azure-regions-existing` — List Azure regions available to an existing endpoint's subscriptions
+- `list-azure-regions-pre-creation` — List Azure regions available to a new endpoint's subscriptions (pre-creation)
+- `list-azure-required-permissions` — List the ARM permissions the connector needs, by tier
+- `list-azure-resource-groups-existing` — List Azure resource groups (with VM counts) for an existing endpoint
+- `list-azure-resource-groups-pre-creation` — List Azure resource groups (with VM counts) for a new endpoint's scope
+- `list-azure-subscriptions-existing` — List Azure subscriptions for an existing connector endpoint
+- `list-azure-subscriptions-pre-creation` — List Azure subscriptions for a new endpoint (pre-creation)
+- `preview-azure-scope-existing` — Preview the scope of an existing endpoint (post-creation scope edit)
+- `preview-azure-scope-pre-creation` — Preview a scope before creating the connector
+- `validate-azure-connection-existing` — Validate the Azure connection of an existing endpoint, optionally with edited credentials
+- `validate-azure-connection-pre-creation` — Validate Azure connection for a new endpoint (pre-creation)
+- `validate-azure-permissions-existing` — Validate Azure permissions for an existing connector endpoint
+- `validate-azure-permissions-pre-creation` — Validate Azure permissions for a new endpoint (pre-creation)
+- `validate-azure-region-permissions-existing` — Validate an existing endpoint's region filter against its subscriptions
+- `validate-azure-region-permissions-pre-creation` — Validate a new endpoint's region filter against its subscriptions (pre-creation)
+
+#### `policy` (+11)
+
+- `create-access-policy-review` — Record a completed configuration review for an Access Policy
+- `create-policy-review` — Record a completed configuration review for a Policy
+- `export-access-policy-security-profile-rules` — Generate a CSV export of one Access Policy Security Profile's rules
+- `export-access-policy-security-profiles` — Generate an Access Policy Security Profiles CSV export
+- `export-security-profiles` — Generate a Security Profiles CSV export
+- `export-security-rules` — Generate a CSV export of one Security Profile's rules
+- `search-access-policy-security-profile-rules` — Search, filter and page the rules of one Access Policy Security Profile
+- `search-access-policy-security-profiles` — Search, filter and page Access Policy Security Profiles
+- `search-policies-for-policy-set` — Search and filter Policies in given Policy Set: filters in the JSON body
+- `search-security-profiles` — Search, filter and page Security Profiles
+- `search-security-rules` — Search, filter and page the Security Rules of one Security Profile
+
+#### `system` (+2)
+
+- `retrieve-snapshot-evidence` — Get snapshot evidence package
+- `retrieve-snapshot-markdown` — Get snapshot Markdown
+
+#### `topology` (+4)
+
+- `get-virtual-edge-nodes-metrics-summary` — Aggregated VEN counts grouped per dimension (metrics summary)
+- `get-virtual-edges-metrics-summary` — Aggregated VE counts grouped per dimension (metrics summary)
+- `get-workload-distribution-zone-usage` — Report whether a Workload Distribution Zone is referenced by any workload-discovery connector endpoint
+- `list-workload-distribution-zones` — List Workload Distribution Zones known to Identity Graph
 
 ## What changed in CCC 26.7
 
@@ -764,7 +978,7 @@ A further 118 operations changed only in their response schema or status codes. 
 - [AI Agent Operating Guide](docs/AGENTS.md) — How an AI agent should run the CLI on a human's behalf
 - [Glossary Appendix](docs/glossary.md) — UI term → CLI command reference (human-readable)
 - [Configuration Reference](docs/configuration.md) — Profiles, env vars, output formats, JMESPath
-- [Command Reference](docs/command-reference.md) — All 610 commands with descriptions
+- [Command Reference](docs/command-reference.md) — All 650 commands with descriptions
 
 ## License
 

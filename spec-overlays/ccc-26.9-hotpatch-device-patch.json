@@ -1,0 +1,39 @@
+{
+  "provenance": "CCC 26.9 hot patch, ENG-31142/ENG-31333, 2026-10-15",
+  "about": "CCC 26.9 tenants are hot-patched to serve PATCH /api/identity-graph/v1/devices/{id} (ENG-31142 server fix, Elisity/ccc PR #17262). The published 26.9 spec predates the hot patch and declares only PUT and DELETE at that path. The CLI omits the device PUT (ENG-31333), so `devices update-device` exists only if this overlay is applied: python3 generate_commands.py --spec <26.9 spec> --overlay spec-overlays/ccc-26.9-hotpatch-device-patch.json. Remove this file once the published spec declares the PATCH; until then the generator prefers the spec's own definition if it ever has one.",
+  "operations": [
+    {
+      "path": "/api/identity-graph/v1/devices/{id}",
+      "method": "patch",
+      "cloneFrom": "put",
+      "set": {
+        "summary": "Partially update device by ID",
+        "operationId": "patchDevice",
+        "description": "Same permission, target-enrichment-layer query parameter and If-Match precondition as PUT. An omitted, null or empty ip or venId keeps the device's current value, so an attribute-only update does not detach the device. Attributes are merged into the target enrichment layer. Returns 204 with no body.",
+        "responses": {
+          "204": {
+            "description": "Successfully updated device"
+          },
+          "400": {
+            "description": "Invalid input, validation failed",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

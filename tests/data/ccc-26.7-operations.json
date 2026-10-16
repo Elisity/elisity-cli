@@ -1,0 +1,4410 @@
+{
+ "x-skeleton-of": {
+  "source": "insights-demo.idp01.elisity.io",
+  "sha256": "16d038d2142fca874840ef2c2d807d4ca265c33fb1c58fb63ffcef12a2fd582c",
+  "regenerate": "python3 tools/spec_skeleton.py <spec> --source <tenant>"
+ },
+ "paths": {
+  "/api/identity-graph/v2/devices/purge-settings": {
+   "get": {
+    "tags": [
+     "Offline Device Purge Settings"
+    ],
+    "operationId": "getAllSettings"
+   },
+   "put": {
+    "tags": [
+     "Offline Device Purge Settings"
+    ],
+    "operationId": "updateSettings"
+   }
+  },
+  "/api/identity-graph/v2/data/oui": {
+   "get": {
+    "tags": [
+     "Data"
+    ],
+    "operationId": "getCustomOuiMappings"
+   },
+   "put": {
+    "tags": [
+     "Data"
+    ],
+    "operationId": "applyCustomOuiMappings"
+   }
+  },
+  "/api/identity-graph/v1/time-based-access-configuration/{id}": {
+   "get": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "getConfigurationById"
+   },
+   "put": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "updateConfiguration"
+   },
+   "delete": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "deleteConfiguration"
+   }
+  },
+  "/api/identity-graph/v1/suppression/{id}": {
+   "put": {
+    "tags": [
+     "Suppression List"
+    ],
+    "operationId": "update"
+   },
+   "delete": {
+    "tags": [
+     "Suppression List"
+    ],
+    "operationId": "delete"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}": {
+   "put": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "updateDevice"
+   },
+   "delete": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "deleteDevice"
+   }
+  },
+  "/api/identity-graph/v1/devices/recalculate-attributes": {
+   "put": {
+    "tags": [
+     "Device - recalculate-attributes"
+    ],
+    "operationId": "recalculateAttributes"
+   }
+  },
+  "/api/identity-graph/v1/devices/bulk": {
+   "put": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "bulkUpdateDevices"
+   },
+   "post": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "bulkCreateDevices"
+   },
+   "delete": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "bulkDeleteDevices"
+   }
+  },
+  "/api/identity-graph/v1/devices/bulk/recalculate-effective": {
+   "put": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "bulkRecalculateEffectiveAttributes"
+   }
+  },
+  "/api/identity-graph/v1/devices/attributes/{attributeName}": {
+   "get": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "getValuesForDeviceAttribute"
+   },
+   "put": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "addDeviceUniqueAttributeValue"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/devices/{id}": {
+   "put": {
+    "tags": [
+     "Custom Connector Inventory - CRUD"
+    ],
+    "operationId": "update_1"
+   },
+   "delete": {
+    "tags": [
+     "Custom Connector Inventory - CRUD"
+    ],
+    "operationId": "delete_1"
+   }
+  },
+  "/api/identity-graph/v1/connectors/{connectorId}": {
+   "get": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "readConnector"
+   },
+   "put": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "updateConnector"
+   },
+   "delete": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "deleteConnector"
+   }
+  },
+  "/api/identity-graph/v1/connectors/{connectorId}/endpoints/{endpointId}": {
+   "get": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "getEndpoint"
+   },
+   "put": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "updateEndpoint"
+   },
+   "delete": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "deleteEndpoint"
+   }
+  },
+  "/api/identity-graph/v1/conf/{id}": {
+   "get": {
+    "tags": [
+     "Connectors Configurations (Deprecated)"
+    ],
+    "operationId": "readConnectorConfiguration"
+   },
+   "put": {
+    "tags": [
+     "Connectors Configurations (Deprecated)"
+    ],
+    "operationId": "updateConnectorConfiguration"
+   },
+   "delete": {
+    "tags": [
+     "Connectors Configurations (Deprecated)"
+    ],
+    "operationId": "deleteConnectorConfiguration"
+   }
+  },
+  "/api/identity-graph/workloads": {
+   "post": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "createWorkload"
+   }
+  },
+  "/api/identity-graph/workloads/view": {
+   "post": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "getWorkloadsView"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/{connectorId}/{endpointId}/validate-permissions": {
+   "post": {
+    "tags": [
+     "Workload Discovery"
+    ],
+    "operationId": "validatePermissionsExisting"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/{connectorId}/{endpointId}/regions": {
+   "post": {
+    "tags": [
+     "Workload Discovery"
+    ],
+    "operationId": "listAvailableRegionsExisting"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/validate-permissions": {
+   "post": {
+    "tags": [
+     "Workload Discovery"
+    ],
+    "operationId": "validatePermissionsPreCreation"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/setup/aws/trust-policy": {
+   "post": {
+    "tags": [
+     "AWS Setup"
+    ],
+    "operationId": "generateTrustPolicy"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/setup/aws/generate-external-id": {
+   "post": {
+    "tags": [
+     "AWS Setup"
+    ],
+    "operationId": "generateExternalId"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/regions": {
+   "post": {
+    "tags": [
+     "Workload Discovery"
+    ],
+    "operationId": "listAvailableRegions"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/ec2/{connectorId}": {
+   "post": {
+    "tags": [
+     "Workload Discovery"
+    ],
+    "operationId": "discoverEc2Workloads"
+   }
+  },
+  "/api/identity-graph/workloads/connectors/{connectorId}/{endpointId}/sync": {
+   "post": {
+    "tags": [
+     "Workload Connector Sync"
+    ],
+    "operationId": "syncEndpoint"
+   }
+  },
+  "/api/identity-graph/workloads/connectors/{connectorId}/sync": {
+   "post": {
+    "tags": [
+     "Workload Connector Sync"
+    ],
+    "operationId": "syncConnector"
+   }
+  },
+  "/api/identity-graph/workloads/aggregate": {
+   "post": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "getWorkloadAggregate"
+   }
+  },
+  "/api/identity-graph/v2/devices/view": {
+   "post": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "getDevicesView"
+   }
+  },
+  "/api/identity-graph/v2/devices/view/refresh": {
+   "post": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "refreshDevicesView"
+   }
+  },
+  "/api/identity-graph/v2/devices/sync": {
+   "get": {
+    "tags": [
+     "Devices - View Sync"
+    ],
+    "operationId": "check"
+   },
+   "post": {
+    "tags": [
+     "Devices - View Sync"
+    ],
+    "operationId": "sync"
+   }
+  },
+  "/api/identity-graph/v2/devices/export": {
+   "post": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "exportDevices"
+   }
+  },
+  "/api/identity-graph/v2/devices/aggregate": {
+   "post": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "getDeviceAggregate"
+   }
+  },
+  "/api/identity-graph/v1/time-based-access-configuration": {
+   "get": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "getConfigurations"
+   },
+   "post": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "createConfiguration"
+   }
+  },
+  "/api/identity-graph/v1/time-based-access-configuration/{id}/duplicate": {
+   "post": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "duplicateConfiguration"
+   }
+  },
+  "/api/identity-graph/v1/time-based-access-configuration/query": {
+   "post": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "getConfigurationsByIds"
+   }
+  },
+  "/api/identity-graph/v1/suppression": {
+   "get": {
+    "tags": [
+     "Suppression List"
+    ],
+    "operationId": "getUsers"
+   },
+   "post": {
+    "tags": [
+     "Suppression List"
+    ],
+    "operationId": "create"
+   }
+  },
+  "/api/identity-graph/v1/settings/elisity-enrichment-order": {
+   "get": {
+    "tags": [
+     "Settings"
+    ],
+    "operationId": "getBlendedEnrichmentOrder"
+   },
+   "post": {
+    "tags": [
+     "Settings"
+    ],
+    "operationId": "upsertEnrichmentOrder"
+   },
+   "delete": {
+    "tags": [
+     "Settings"
+    ],
+    "operationId": "deleteEnrichmentOrder"
+   }
+  },
+  "/api/identity-graph/v1/labels": {
+   "get": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "list"
+   },
+   "post": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "create_1"
+   }
+  },
+  "/api/identity-graph/v1/labels/lookup": {
+   "post": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "lookup"
+   }
+  },
+  "/api/identity-graph/v1/labels/import": {
+   "post": {
+    "tags": [
+     "Label Management - Import"
+    ],
+    "operationId": "importLabels"
+   }
+  },
+  "/api/identity-graph/v1/labels/import/{uploadId}/cancel": {
+   "post": {
+    "tags": [
+     "Label Management - Import"
+    ],
+    "operationId": "cancelImport"
+   }
+  },
+  "/api/identity-graph/v1/labels/impact": {
+   "post": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "bulkImpact"
+   }
+  },
+  "/api/identity-graph/v1/labels/bulk": {
+   "post": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "bulkCreate"
+   }
+  },
+  "/api/identity-graph/v1/labels/bulk-move": {
+   "post": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "bulkMove"
+   }
+  },
+  "/api/identity-graph/v1/labels/bulk-delete": {
+   "post": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "bulkDelete"
+   }
+  },
+  "/api/identity-graph/v1/folders": {
+   "get": {
+    "tags": [
+     "Label Management - Folders"
+    ],
+    "operationId": "list_1"
+   },
+   "post": {
+    "tags": [
+     "Label Management - Folders"
+    ],
+    "operationId": "create_2"
+   }
+  },
+  "/api/identity-graph/v1/feature-flag/{name}": {
+   "get": {
+    "tags": [
+     "Feature Flag - Identity Graph"
+    ],
+    "operationId": "featureFlagIG"
+   },
+   "post": {
+    "tags": [
+     "Feature Flag - Identity Graph"
+    ],
+    "operationId": "setFeatureFlagIG"
+   }
+  },
+  "/api/identity-graph/v1/devices": {
+   "post": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "createDevice"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}/enrich": {
+   "post": {
+    "tags": [
+     "Device - Enrich"
+    ],
+    "operationId": "enrichById"
+   },
+   "patch": {
+    "tags": [
+     "Device - Enrich"
+    ],
+    "operationId": "enrichByIdAppend"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}/enrich/{source}": {
+   "post": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "executeSynchronousOnDemandEnrichment"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}/enrich-all": {
+   "post": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "executeSynchronousOnDemandEnrichment_1"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}/detach": {
+   "post": {
+    "tags": [
+     "Device - Attach"
+    ],
+    "operationId": "detach"
+   }
+  },
+  "/api/identity-graph/v1/devices/enrich": {
+   "post": {
+    "tags": [
+     "Device - Enrich"
+    ],
+    "operationId": "enrichByIp"
+   },
+   "patch": {
+    "tags": [
+     "Device - Enrich"
+    ],
+    "operationId": "enrichByIpAppend"
+   }
+  },
+  "/api/identity-graph/v1/devices/detach": {
+   "post": {
+    "tags": [
+     "Device - Attach"
+    ],
+    "operationId": "detachByMac"
+   }
+  },
+  "/api/identity-graph/v1/devices/bulk/upload": {
+   "post": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "bulkCreateDevicesFromFile"
+   }
+  },
+  "/api/identity-graph/v1/devices/bulk/refresh": {
+   "post": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "executeBulkRefresh"
+   }
+  },
+  "/api/identity-graph/v1/devices/attached": {
+   "post": {
+    "tags": [
+     "Device - Attach"
+    ],
+    "operationId": "attached"
+   }
+  },
+  "/api/identity-graph/v1/devices/attach": {
+   "post": {
+    "tags": [
+     "Device - Attach"
+    ],
+    "operationId": "attach"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{id}/import": {
+   "post": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "importFile"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{id}/import/{uploadId}/cancel": {
+   "post": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "cancelImport_1"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{id}/import/cancel-current": {
+   "post": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "cancelCurrentImport"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/export": {
+   "post": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "exportDevices_1"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/export/cancel-current": {
+   "post": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "cancelCurrentExport"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/devices": {
+   "post": {
+    "tags": [
+     "Custom Connector Inventory - CRUD"
+    ],
+    "operationId": "create_3"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/async-export": {
+   "post": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "asyncExportDevices"
+   }
+  },
+  "/api/identity-graph/v1/connectors": {
+   "get": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "readAllConnectors"
+   },
+   "post": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "createConnector"
+   }
+  },
+  "/api/identity-graph/v1/connectors/{connectorId}/endpoints": {
+   "get": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "listEndpoints"
+   },
+   "post": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "addEndpoint"
+   }
+  },
+  "/api/identity-graph/v1/connectors/{connectorId}/endpoints/validate": {
+   "post": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "validateEndpointForConnector"
+   }
+  },
+  "/api/identity-graph/v1/connectors/endpoints/validate": {
+   "post": {
+    "tags": [
+     "Connector Configuration"
+    ],
+    "operationId": "validateEndpointPreCreation"
+   }
+  },
+  "/api/identity-graph/v1/conf": {
+   "post": {
+    "tags": [
+     "Connectors Configurations (Deprecated)"
+    ],
+    "operationId": "createConnectorConfiguration"
+   }
+  },
+  "/api/identity-graph/v1/conf/endpoint/validate": {
+   "post": {
+    "tags": [
+     "Connectors Configurations (Deprecated)"
+    ],
+    "operationId": "validateConnectorEndpointConfiguration"
+   }
+  },
+  "/api/identity-graph/workloads/{workloadId}/interfaces/{interfaceId}": {
+   "patch": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "updateWorkloadInterface"
+   }
+  },
+  "/api/identity-graph/workloads/{id}": {
+   "get": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "getWorkloadDetails"
+   },
+   "patch": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "updateWorkload"
+   }
+  },
+  "/api/identity-graph/v1/labels/{id}": {
+   "get": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "getById"
+   },
+   "delete": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "delete_2"
+   },
+   "patch": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "update_2"
+   }
+  },
+  "/api/identity-graph/v1/folders/{id}/rename": {
+   "patch": {
+    "tags": [
+     "Label Management - Folders"
+    ],
+    "operationId": "rename"
+   }
+  },
+  "/api/identity-graph/v1/folders/{id}/move": {
+   "patch": {
+    "tags": [
+     "Label Management - Folders"
+    ],
+    "operationId": "move"
+   }
+  },
+  "/api/identity-graph/workloads/specification": {
+   "get": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "getSpecification"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/setup/aws/permissions-policy": {
+   "get": {
+    "tags": [
+     "AWS Setup"
+    ],
+    "operationId": "getPermissionsPolicy"
+   }
+  },
+  "/api/identity-graph/workloads/discovery/setup/aws/auth-methods": {
+   "get": {
+    "tags": [
+     "AWS Setup"
+    ],
+    "operationId": "getAuthMethods"
+   }
+  },
+  "/api/identity-graph/workloads/count": {
+   "get": {
+    "tags": [
+     "Workloads"
+    ],
+    "operationId": "getWorkloadCount"
+   }
+  },
+  "/api/identity-graph/v2/devices": {
+   "get": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "searchDevice"
+   }
+  },
+  "/api/identity-graph/v2/devices/{id}": {
+   "get": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "readDevice"
+   }
+  },
+  "/api/identity-graph/v2/devices/count": {
+   "get": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "getDeviceHeaderData"
+   }
+  },
+  "/api/identity-graph/v2/devices/attributes/{attributeName}": {
+   "get": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "getDeviceAttributeValues"
+   }
+  },
+  "/api/identity-graph/v2/devices/attributes/{attributeName}/values": {
+   "get": {
+    "tags": [
+     "Device - CRUD - v2"
+    ],
+    "operationId": "getDeviceAttributeValuesWithDisplayNames"
+   }
+  },
+  "/api/identity-graph/v2/data/specification": {
+   "get": {
+    "tags": [
+     "Data"
+    ],
+    "operationId": "readAllLayerInstancesSpecification"
+   }
+  },
+  "/api/identity-graph/v2/data/specification/static/{source}": {
+   "get": {
+    "tags": [
+     "Data"
+    ],
+    "operationId": "readStaticLayerSpecification"
+   }
+  },
+  "/api/identity-graph/v2/data/specification/icons": {
+   "get": {
+    "tags": [
+     "Data"
+    ],
+    "operationId": "listAllCustomConnectorIconsBase64"
+   }
+  },
+  "/api/identity-graph/v1/time-based-access-configuration/search": {
+   "get": {
+    "tags": [
+     "Time-Based Configuration"
+    ],
+    "operationId": "searchByName"
+   }
+  },
+  "/api/identity-graph/v1/settings/elisity-enrichment-order/raw": {
+   "get": {
+    "tags": [
+     "Settings"
+    ],
+    "operationId": "getRawEnrichmentOrder"
+   }
+  },
+  "/api/identity-graph/v1/settings/elisity-enrichment-order/dto": {
+   "get": {
+    "tags": [
+     "Settings"
+    ],
+    "operationId": "getEnrichmentOrderDTO"
+   }
+  },
+  "/api/identity-graph/v1/settings/all": {
+   "get": {
+    "tags": [
+     "Settings"
+    ],
+    "operationId": "readAllSettings"
+   }
+  },
+  "/api/identity-graph/v1/labels/{id}/impact": {
+   "get": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "impact"
+   }
+  },
+  "/api/identity-graph/v1/labels/template": {
+   "get": {
+    "tags": [
+     "Label Management - Import"
+    ],
+    "operationId": "downloadTemplate"
+   }
+  },
+  "/api/identity-graph/v1/labels/import/{uploadId}/status": {
+   "get": {
+    "tags": [
+     "Label Management - Import"
+    ],
+    "operationId": "getImportStatus"
+   }
+  },
+  "/api/identity-graph/v1/labels/colors": {
+   "get": {
+    "tags": [
+     "Label Management"
+    ],
+    "operationId": "colors"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}/events": {
+   "get": {
+    "tags": [
+     "Device Event History"
+    ],
+    "operationId": "readHistoryForDevice"
+   }
+  },
+  "/api/identity-graph/v1/devices/count": {
+   "get": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "getDeviceHeaderData_1"
+   }
+  },
+  "/api/identity-graph/v1/devices/attach/can-accept-from/{nodeId}": {
+   "get": {
+    "tags": [
+     "Device - Attach"
+    ],
+    "operationId": "checkVenAvailability"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{id}/import/{uploadId}/status": {
+   "get": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "getStatus"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{id}/import/template": {
+   "get": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "downloadImportTemplate"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{id}/devices": {
+   "get": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "getCustomConnectorDevices"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/export/{exportId}/status": {
+   "get": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "getExportStatus"
+   }
+  },
+  "/api/identity-graph/v1/custom-connector/{connectorId}/export/{exportId}/file": {
+   "get": {
+    "tags": [
+     "Custom Connector Devices"
+    ],
+    "operationId": "downloadExportFile"
+   }
+  },
+  "/api/identity-graph/v1/connector-status": {
+   "get": {
+    "tags": [
+     "Connector - status"
+    ],
+    "operationId": "read"
+   }
+  },
+  "/api/identity-graph/v1/connector-connectivity": {
+   "get": {
+    "tags": [
+     "Connector - connectivity-status"
+    ],
+    "operationId": "read_1"
+   }
+  },
+  "/api/identity-graph/v1/connector-connectivity/{type}/endpoints": {
+   "get": {
+    "tags": [
+     "Connector - connectivity-status"
+    ],
+    "operationId": "readEndpoints"
+   }
+  },
+  "/api/identity-graph/v1/conf/all": {
+   "get": {
+    "tags": [
+     "Connectors Configurations (Deprecated)"
+    ],
+    "operationId": "readAllConnectorConfigurations"
+   }
+  },
+  "/api/identity-graph/v1/folders/{id}": {
+   "delete": {
+    "tags": [
+     "Label Management - Folders"
+    ],
+    "operationId": "delete_3"
+   }
+  },
+  "/api/identity-graph/v1/devices/{id}/{source}": {
+   "delete": {
+    "tags": [
+     "Device - CRUD"
+    ],
+    "operationId": "purgeDeviceLayer"
+   }
+  },
+  "/api/identity-graph/v1/devices/bulk/purge": {
+   "delete": {
+    "tags": [
+     "Device - Bulk"
+    ],
+    "operationId": "bulkPurgeDeviceLayers"
+   }
+  },
+  "/api/policy/v2/policy-groups/{id}/unlock": {
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "unlockPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/{id}/lock": {
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "lockPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/settings": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getAutoGroupTagValueSettings"
+   },
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "updateAutoGroupTagValueSettings"
+   }
+  },
+  "/api/policy/v2/policy-groups/network/{id}": {
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "updateNetworkPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/dynamic/{id}": {
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "updateDynamicPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/dynamic/{id}/sibling-order": {
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "reorderSiblings"
+   }
+  },
+  "/api/policy/v2/policy-groups/dynamic/{id}/scope": {
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "movePolicyGroupScope"
+   }
+  },
+  "/api/policy/v2/policy-groups/bulk": {
+   "put": {
+    "tags": [
+     "Policy Group Bulk"
+    ],
+    "operationId": "updatePolicyGroups"
+   },
+   "delete": {
+    "tags": [
+     "Policy Group Bulk"
+    ],
+    "operationId": "deletePolicyGroups"
+   }
+  },
+  "/api/policy/v2/policy-groups/bulk/device-groups": {
+   "put": {
+    "tags": [
+     "Policy Group with Device Group Bulk",
+     "Policy Group Bulk"
+    ],
+    "operationId": "updatePolicyGroupsWithDeviceGroups"
+   }
+  },
+  "/api/policy/v1/vendor/{id}": {
+   "get": {
+    "tags": [
+     "Vendor"
+    ],
+    "operationId": "getVendor"
+   },
+   "put": {
+    "tags": [
+     "Vendor"
+    ],
+    "operationId": "updateVendor"
+   },
+   "delete": {
+    "tags": [
+     "Vendor"
+    ],
+    "operationId": "deleteVendor"
+   }
+  },
+  "/api/policy/v1/security-profiles/{id}": {
+   "get": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "readSecurityProfile"
+   },
+   "put": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "updateSecurityProfile"
+   },
+   "delete": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "deleteSecurityProfiles"
+   }
+  },
+  "/api/policy/v1/security-profiles/logging-allowed": {
+   "get": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "getCurrentMultiplePolicySetEnablementFlag"
+   },
+   "put": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "enableMultiplePolicySets"
+   }
+  },
+  "/api/policy/v1/policy-views/{id}": {
+   "get": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "readPolicyView"
+   },
+   "put": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "updatePolicyView"
+   },
+   "delete": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "deletePolicyView"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}": {
+   "put": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "updatePolicySet"
+   },
+   "post": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "clonePolicySet"
+   },
+   "delete": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "deletePolicySet"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies/{policyId}": {
+   "put": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "updatePolicy"
+   },
+   "delete": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "deletePolicy"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies/bulk": {
+   "put": {
+    "tags": [
+     "Policy Bulk"
+    ],
+    "operationId": "updatePolicy_1"
+   },
+   "post": {
+    "tags": [
+     "Policy Bulk"
+    ],
+    "operationId": "createPolicy"
+   },
+   "delete": {
+    "tags": [
+     "Policy Bulk"
+    ],
+    "operationId": "deletePolicy_1"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/access-policies/{id}": {
+   "put": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "update_1"
+   },
+   "delete": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "delete_1"
+   }
+  },
+  "/api/policy/v1/policy-group-templates/{id}": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getTemplateById"
+   },
+   "put": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "updateTemplate"
+   },
+   "delete": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "deleteTemplate"
+   }
+  },
+  "/api/policy/v1/policy-group-label/{id}": {
+   "get": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "getLabelById"
+   },
+   "put": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "updatePolicyGroupLabel"
+   },
+   "delete": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "deleteLabel"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/{id}": {
+   "put": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "updateSuggestion"
+   },
+   "delete": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "deleteSuggestion"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/{id}/reorder/{position}": {
+   "put": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "reorderSuggestion"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/network/suggestion": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "listNetworkPolicyGroupSuggestions"
+   },
+   "put": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "updateSuggestion_1"
+   },
+   "post": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "createSuggestions"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/settings": {
+   "get": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "getSettings"
+   },
+   "put": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "saveSettings"
+   }
+  },
+  "/api/policy/v1/image": {
+   "put": {
+    "tags": [
+     "Image"
+    ],
+    "operationId": "updateImage"
+   },
+   "post": {
+    "tags": [
+     "Image"
+    ],
+    "operationId": "createImage"
+   }
+  },
+  "/api/policy/v1/devices/{deviceServiceDeviceId}/unlock": {
+   "put": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "unlockDevice"
+   }
+  },
+  "/api/policy/v1/devices/{deviceServiceDeviceId}/lock": {
+   "put": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "lockDevice"
+   }
+  },
+  "/api/policy/v1/devices/bulk/toggle-lock": {
+   "put": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "toggleLockBulk"
+   }
+  },
+  "/api/policy/v1/coverage/settings": {
+   "get": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "getCoverageWeightSettings"
+   },
+   "put": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "updateCoverageWeightSettings"
+   }
+  },
+  "/api/policy/v1/access-policy-security-profiles/{id}": {
+   "get": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "readById"
+   },
+   "put": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "update_1_1"
+   },
+   "delete": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "delete_1_1"
+   }
+  },
+  "/api/policy/v2/policy-groups/summary": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupsSummary"
+   }
+  },
+  "/api/policy/v2/policy-groups/partial-reorder": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "partialReorderPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/network": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "createNetworkPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/network/validate-subnet": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "validateSubnetStaticPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/name/validate": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "validatePolicyGroupName"
+   }
+  },
+  "/api/policy/v2/policy-groups/name/validate/{policyGroupId}": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "validatePolicyGroupNameForExistingPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/matching-criteria/validate": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "validateMatchCriteria"
+   }
+  },
+  "/api/policy/v2/policy-groups/matching-criteria/validate/{policyGroupId}": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "validateMatchCriteriaForExistingPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/local": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getLocalPolicyGroupSites"
+   },
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "postLocalPolicyGroupSite"
+   }
+  },
+  "/api/policy/v2/policy-groups/find-by-ids": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupsByIds"
+   }
+  },
+  "/api/policy/v2/policy-groups/export": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "exportPolicyGroupToCsv"
+   }
+  },
+  "/api/policy/v2/policy-groups/enable-nested-policy-groups": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getCurrentNestedPolicyGroupsFlag"
+   },
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "enableNestedPolicyGroups"
+   }
+  },
+  "/api/policy/v2/policy-groups/enable-local-policy-groups": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getCurrentLocalPolicyGroupsFlag"
+   },
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "enableLocalPolicyGroups"
+   }
+  },
+  "/api/policy/v2/policy-groups/dynamic": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "createDynamicPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/dynamic/validate-subnet": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "validateSubnetDynamicPolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/devices": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getDevicesCurrentPgAndNewPgAfterEvaluation"
+   }
+  },
+  "/api/policy/v2/policy-groups/bulk/network": {
+   "post": {
+    "tags": [
+     "Policy Group Bulk"
+    ],
+    "operationId": "createNetworkPolicyGroups"
+   }
+  },
+  "/api/policy/v2/policy-groups/bulk/network/validate-subnet": {
+   "post": {
+    "tags": [
+     "Policy Group",
+     "Policy Group Bulk"
+    ],
+    "operationId": "validateSubnetStaticPolicyGroup_1"
+   }
+  },
+  "/api/policy/v2/policy-groups/bulk/dynamic": {
+   "post": {
+    "tags": [
+     "Policy Group Bulk"
+    ],
+    "operationId": "createDynamicPolicyGroups"
+   }
+  },
+  "/api/policy/v1/vendor": {
+   "get": {
+    "tags": [
+     "Vendor"
+    ],
+    "operationId": "listVendors"
+   },
+   "post": {
+    "tags": [
+     "Vendor"
+    ],
+    "operationId": "createVendor"
+   }
+  },
+  "/api/policy/v1/state/resync": {
+   "post": {
+    "tags": [
+     "State Sync"
+    ],
+    "operationId": "forceSync"
+   }
+  },
+  "/api/policy/v1/site-labels/is-used": {
+   "post": {
+    "tags": [
+     "site-label-controller"
+    ],
+    "operationId": "isSiteLabelInUse"
+   }
+  },
+  "/api/policy/v1/security-profiles": {
+   "get": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "getAllSecurityProfilesAsNdJson"
+   },
+   "post": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "createSecurityProfile"
+   }
+  },
+  "/api/policy/v1/security-profiles/bulk": {
+   "post": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "createSecurityProfiles"
+   }
+  },
+  "/api/policy/v1/policy-views": {
+   "get": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "getAllPolicyViewsAsNdJson"
+   },
+   "post": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "createPolicyView"
+   }
+  },
+  "/api/policy/v1/policy-views/{policyViewId}/matrix": {
+   "post": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "getMatrixWithSearch"
+   }
+  },
+  "/api/policy/v1/policy-views/{id}/matrix-legacy": {
+   "post": {
+    "tags": [
+     "Policy View"
+    ],
+    "operationId": "getMatrix"
+   }
+  },
+  "/api/policy/v1/policy-sets": {
+   "get": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "getAllAsNdJson"
+   },
+   "post": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "createPolicySet"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/replica": {
+   "post": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "createReplicaPolicySet"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getAllPoliciesForPolicySetAsNdJson"
+   },
+   "post": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "createPolicy_1"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies/overwrite": {
+   "post": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "overwritePolicy"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies/operation-preview": {
+   "post": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "previewOperation"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies/export": {
+   "post": {
+    "tags": [
+     "policy-set-controller"
+    ],
+    "operationId": "exportPoliciesToCsv"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/matrix": {
+   "post": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getMatrixWithSearch_1"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/access-policies": {
+   "get": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "getAccessPolicies"
+   },
+   "post": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "create_1"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/access-policies/bulk": {
+   "post": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "bulkCreate_1"
+   }
+  },
+  "/api/policy/v1/policy-group-templates": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "searchTemplates"
+   },
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "createTemplate"
+   }
+  },
+  "/api/policy/v1/policy-group-templates/export": {
+   "post": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "exportTemplates"
+   }
+  },
+  "/api/policy/v1/policy-group-label": {
+   "get": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "getAllAsNdJson_1"
+   },
+   "post": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "createPolicyGroupLabel"
+   }
+  },
+  "/api/policy/v1/policy-group-label/export": {
+   "post": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "exportPolicyGroupLabels"
+   }
+  },
+  "/api/policy/v1/lookup/network": {
+   "post": {
+    "tags": [
+     "Matched Assets"
+    ],
+    "operationId": "lookupNetwork"
+   }
+  },
+  "/api/policy/v1/lookup/network/export": {
+   "post": {
+    "tags": [
+     "Matched Assets"
+    ],
+    "operationId": "lookupNetworkExport"
+   }
+  },
+  "/api/policy/v1/lookup/dynamic": {
+   "post": {
+    "tags": [
+     "Matched Assets"
+    ],
+    "operationId": "lookupDynamic"
+   }
+  },
+  "/api/policy/v1/lookup/dynamic/totals": {
+   "post": {
+    "tags": [
+     "Matched Assets"
+    ],
+    "operationId": "lookupDynamicTotals"
+   }
+  },
+  "/api/policy/v1/lookup/dynamic/export": {
+   "post": {
+    "tags": [
+     "Matched Assets"
+    ],
+    "operationId": "lookupDynamicExport"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "getPolicyGroupsSuggestionList"
+   },
+   "post": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "createSuggestion"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/reset-to-default": {
+   "post": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "resetSuggestionsToDefault"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/recreate": {
+   "post": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "recreateSuggestions"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/preview/{category}/{addBuiltIn}": {
+   "post": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "postPolicyGroupSuggestionsPreview"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/network/reset-to-default": {
+   "post": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "resetSuggestionsToDefault_1"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/execute/create": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "executeCreateWorkflow"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/execute/activate": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "executeActivateWorkflow"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/day-7/preview": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "day7WorkflowPreview"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/day-30/preview": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "day30WorkflowPreview"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/day-15/preview": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "day15WorkflowPreview"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/day-0/preview": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "day0WorkflowPreview"
+   }
+  },
+  "/api/policy/v1/insights/policies/workflows/all/preview": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "allWorkflowsPreview"
+   }
+  },
+  "/api/policy/v1/insights/policies/reset-to-default": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "resetPolicySuggestionsToDefault"
+   }
+  },
+  "/api/policy/v1/insights/policies/recreate": {
+   "post": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "recreatePolicySuggestions"
+   }
+  },
+  "/api/policy/v1/feature-flag/{name}": {
+   "get": {
+    "tags": [
+     "Feature Flag"
+    ],
+    "operationId": "getStatus_1"
+   },
+   "post": {
+    "tags": [
+     "Feature Flag"
+    ],
+    "operationId": "changeStatus"
+   }
+  },
+  "/api/policy/v1/evaluator/ip-lookup": {
+   "post": {
+    "tags": [
+     "Evaluator"
+    ],
+    "operationId": "lookupEvaluationEndpoint"
+   }
+  },
+  "/api/policy/v1/evaluator/evaluate": {
+   "post": {
+    "tags": [
+     "Evaluator"
+    ],
+    "operationId": "evaluatePolicy"
+   }
+  },
+  "/api/policy/v1/evaluator/evaluate/export": {
+   "post": {
+    "tags": [
+     "Evaluator"
+    ],
+    "operationId": "evaluatePolicyExport"
+   }
+  },
+  "/api/policy/v1/devices/sync": {
+   "post": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "sendStateOfDeviceToIdentityGraph"
+   }
+  },
+  "/api/policy/v1/devices/sync/sync-all": {
+   "post": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "sendStateOfAllDevicesToIdentityGraph"
+   }
+  },
+  "/api/policy/v1/devices/site-labels": {
+   "post": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "getOnlineDevicesForSiteLabels"
+   }
+  },
+  "/api/policy/v1/devices/evaluate": {
+   "post": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "evaluatePolicyGroupForDevice"
+   }
+  },
+  "/api/policy/v1/devices/distribution-zones": {
+   "post": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "getOnlineDevicesForDistributionZones"
+   }
+  },
+  "/api/policy/v1/access-policy-security-profiles": {
+   "get": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "getAll"
+   },
+   "post": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "create_1_1"
+   }
+  },
+  "/api/policy/v2/policy-groups": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupsJson"
+   }
+  },
+  "/api/policy/v2/policy-groups/{policyGroupId}/workloads": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupWorkloads"
+   }
+  },
+  "/api/policy/v2/policy-groups/{policyGroupId}/devices": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupDevices"
+   }
+  },
+  "/api/policy/v2/policy-groups/{id}": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupById"
+   },
+   "delete": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "deletePolicyGroup"
+   }
+  },
+  "/api/policy/v2/policy-groups/{id}/policies": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getAllPoliciesForPolicyGroupAsNdJson"
+   }
+  },
+  "/api/policy/v2/policy-groups/vens/{id}": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupsForVen"
+   }
+  },
+  "/api/policy/v2/policy-groups/vens/device-groups/{venId}": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupsWithDeviceGroupsForVen"
+   }
+  },
+  "/api/policy/v2/policy-groups/tree": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupTree"
+   }
+  },
+  "/api/policy/v2/policy-groups/matching-criteria": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getAllMatchingCriteria"
+   }
+  },
+  "/api/policy/v2/policy-groups/matching-criteria/dynamic-values": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getMatchingCriteriaDynamicValues"
+   }
+  },
+  "/api/policy/v2/policy-groups/enable-nested-policy-groups/can-disable": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "canDisableNestedPolicyGroups"
+   }
+  },
+  "/api/policy/v2/policy-groups/dynamic/{id}/matching-criteria/inheritance": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getMatchingCriteriaInheritance"
+   }
+  },
+  "/api/policy/v1/security-profiles/{id}/policies": {
+   "get": {
+    "tags": [
+     "Security Profile"
+    ],
+    "operationId": "getPoliciesForSecurityProfile"
+   }
+  },
+  "/api/policy/v1/policy-views/{policyViewId}/policies": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getAllPoliciesForPolicyViewAsNdJson"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policy-groups": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getPolicyGroupsAssignedToPolicySet"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/policies/count": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getCountOfAllPoliciesForPolicySet"
+   }
+  },
+  "/api/policy/v1/policy-sets/{policySetId}/nodes": {
+   "get": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "getNodesAssignedToPolicySet"
+   }
+  },
+  "/api/policy/v1/policy-sets/{id}": {
+   "get": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "getPolicySetById"
+   }
+  },
+  "/api/policy/v1/policy-sets/site-labels": {
+   "get": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "getAllSiteLabelsFromAllPolicySets"
+   }
+  },
+  "/api/policy/v1/policy-sets/policies": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getAllPoliciesAsNdJson"
+   }
+  },
+  "/api/policy/v1/policy-sets/policies/{id}": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getPolicyById"
+   }
+  },
+  "/api/policy/v1/policy-sets/policies/count": {
+   "get": {
+    "tags": [
+     "Policy"
+    ],
+    "operationId": "getPoliciesCount"
+   }
+  },
+  "/api/policy/v1/policy-history/{aggregateId}": {
+   "get": {
+    "tags": [
+     "Policy History"
+    ],
+    "operationId": "getHistoryEntries"
+   }
+  },
+  "/api/policy/v1/policy-groups": {
+   "get": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "getAllAsNdJson_2"
+   }
+  },
+  "/api/policy/v1/policy-group-label/search": {
+   "get": {
+    "tags": [
+     "Policy Group Label"
+    ],
+    "operationId": "getPolicyGroupLabels"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/{policyGroupId}/suggestion-match-criteria": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "getSuggestionMatchCriteria"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/{category}": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "getPolicyGroupsSuggestionList_1"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/summary/{category}/{addBuiltIn}": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "getPolicyGroupSuggestions"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/network/summary": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "getSuggestions"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/network/summary/ok-only": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "getSuggestionsOkStatusOnly"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/categories": {
+   "get": {
+    "tags": [
+     "Suggestion",
+     "Dynamic Policy Group Insights"
+    ],
+    "operationId": "getCategoriesList"
+   }
+  },
+  "/api/policy/v1/insights/policies": {
+   "get": {
+    "tags": [
+     "Insights"
+    ],
+    "operationId": "getPolicySuggestionList"
+   }
+  },
+  "/api/policy/v1/image/{name}": {
+   "get": {
+    "tags": [
+     "Image"
+    ],
+    "operationId": "getImage"
+   },
+   "delete": {
+    "tags": [
+     "Image"
+    ],
+    "operationId": "deleteImage"
+   }
+  },
+  "/api/policy/v1/image/list/all": {
+   "get": {
+    "tags": [
+     "Image"
+    ],
+    "operationId": "listImages"
+   }
+  },
+  "/api/policy/v1/devices/{deviceId}/details": {
+   "get": {
+    "tags": [
+     "Device"
+    ],
+    "operationId": "getDeviceDetails"
+   }
+  },
+  "/api/policy/v1/coverage/{policySetId}": {
+   "get": {
+    "tags": [
+     "Policy Set"
+    ],
+    "operationId": "getCoverage"
+   }
+  },
+  "/api/policy/v1/access-policy-security-profiles/{id}/access-policies": {
+   "get": {
+    "tags": [
+     "Access Policy (LPA)"
+    ],
+    "operationId": "getAccessPoliciesForProfile"
+   }
+  },
+  "/api/policy/v2/policy-groups/local/{id}": {
+   "delete": {
+    "tags": [
+     "Policy Group"
+    ],
+    "operationId": "deleteLocalPolicyGroupSiteById"
+   }
+  },
+  "/api/policy/v1/insights/policy-groups/network/suggestion/{id}": {
+   "delete": {
+    "tags": [
+     "Suggestion",
+     "Network Policy Group Insights"
+    ],
+    "operationId": "deleteSuggestion_1"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/{nodeId}/ping": {
+   "put": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "ping"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/{nodeId}/distribution-zones": {
+   "put": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "setDistributionZones"
+   }
+  },
+  "/api/ad-connector-service/v1/configuration": {
+   "get": {
+    "tags": [
+     "ADCS Parameters Configuration"
+    ],
+    "operationId": "getConfigurationValue"
+   },
+   "put": {
+    "tags": [
+     "ADCS Parameters Configuration"
+    ],
+    "operationId": "putConfigurationValue"
+   }
+  },
+  "/api/ad-connector-service/v2/agent/activity": {
+   "get": {
+    "tags": [
+     "AD Agent V2"
+    ],
+    "operationId": "getActivityLogs"
+   },
+   "post": {
+    "tags": [
+     "AD Agent V2"
+    ],
+    "operationId": "saveActivityLogs"
+   }
+  },
+  "/api/ad-connector-service/v1/user/logon-history/{deviceId}/export": {
+   "post": {
+    "tags": [
+     "AD User"
+    ],
+    "operationId": "exportUsersLogonHistory"
+   }
+  },
+  "/api/ad-connector-service/v1/user/export": {
+   "post": {
+    "tags": [
+     "AD User"
+    ],
+    "operationId": "exportUsers"
+   }
+  },
+  "/api/ad-connector-service/v1/refresh/entra": {
+   "post": {
+    "tags": [
+     "Subscription Refresh"
+    ],
+    "operationId": "refreshALLEntra"
+   }
+  },
+  "/api/ad-connector-service/v1/refresh/ad-onprem": {
+   "post": {
+    "tags": [
+     "Subscription Refresh"
+    ],
+    "operationId": "refreshALLAdOnPrem"
+   }
+  },
+  "/api/ad-connector-service/v1/entra/sync": {
+   "post": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "sync_1"
+   }
+  },
+  "/api/ad-connector-service/v1/entra/export": {
+   "post": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "exportUsers_1"
+   }
+  },
+  "/api/ad-connector-service/v1/entra/auth": {
+   "get": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "getAuth"
+   },
+   "post": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "updateAuth"
+   },
+   "delete": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "deleteAuth"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors": {
+   "get": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "getConnectors"
+   },
+   "post": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "registerConnector"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/resync/{nodeId}": {
+   "post": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "resync"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/restart/{nodeId}": {
+   "post": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "restart"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/{nodeId}/logs": {
+   "post": {
+    "tags": [
+     "AD Agent Logs"
+    ],
+    "operationId": "uploadLogs"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/{nodeId}/logs/pull": {
+   "get": {
+    "tags": [
+     "AD Agent Logs"
+    ],
+    "operationId": "getPullStatus"
+   },
+   "post": {
+    "tags": [
+     "AD Agent Logs"
+    ],
+    "operationId": "pullLogs"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/update": {
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "updateAgentToVersion"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/update-all": {
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "updateAllAgentsToLatestVersion"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/status": {
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "agentStatus"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/logger": {
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "saveLoggerChange"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/export": {
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "export"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/description": {
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "updateAgentDescription"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/credentials": {
+   "get": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "getAgentServiceCredentials"
+   },
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "updateAgentServiceCredentials"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/config": {
+   "get": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "getAdAgentConfig"
+   },
+   "post": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "saveAdAgentConfig"
+   }
+  },
+  "/api/ad-connector-service/v2/agent/dc/bookmark": {
+   "get": {
+    "tags": [
+     "AD Agent V2"
+    ],
+    "operationId": "getDcBookmark"
+   }
+  },
+  "/api/ad-connector-service/v1/user/view": {
+   "get": {
+    "tags": [
+     "AD User"
+    ],
+    "operationId": "getUsersView"
+   }
+  },
+  "/api/ad-connector-service/v1/user/logon-history/{deviceId}": {
+   "get": {
+    "tags": [
+     "AD User"
+    ],
+    "operationId": "getUsersLogonHistory"
+   }
+  },
+  "/api/ad-connector-service/v1/user/count": {
+   "get": {
+    "tags": [
+     "AD User"
+    ],
+    "operationId": "getUsersCountData"
+   }
+  },
+  "/api/ad-connector-service/v1/ip-attach/suppressed": {
+   "get": {
+    "tags": [
+     "IP Attach"
+    ],
+    "operationId": "getSuppressedIpAttaches"
+   }
+  },
+  "/api/ad-connector-service/v1/entra/view": {
+   "get": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "getEntraUsers"
+   }
+  },
+  "/api/ad-connector-service/v1/entra/status": {
+   "get": {
+    "tags": [
+     "Entra ID"
+    ],
+    "operationId": "status"
+   }
+  },
+  "/api/ad-connector-service/v1/distribution-zones": {
+   "get": {
+    "tags": [
+     "Distribution Zones"
+    ],
+    "operationId": "getIsolatedDistributionZones"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/{nodeId}": {
+   "get": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "getConnectorById"
+   },
+   "delete": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "unregisterConnector"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/{nodeId}/deletion-context": {
+   "get": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "getConnectorDeletionContext"
+   }
+  },
+  "/api/ad-connector-service/v1/connectors/distribution-zone-assignments": {
+   "get": {
+    "tags": [
+     "AD Connector"
+    ],
+    "operationId": "getDistributionZoneAssignments"
+   }
+  },
+  "/api/ad-connector-service/v1/attribute": {
+   "get": {
+    "tags": [
+     "AD Attributes"
+    ],
+    "operationId": "getAttributeValues"
+   }
+  },
+  "/api/ad-connector-service/v1/agent": {
+   "get": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "getAgentsAndDcs"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/manifest": {
+   "get": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "agentManifest"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/logging": {
+   "get": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "getConnectors_1"
+   }
+  },
+  "/api/ad-connector-service/v1/agent/credentials/syslog": {
+   "get": {
+    "tags": [
+     "AD Agent"
+    ],
+    "operationId": "getSyslogCredentials"
+   }
+  },
+  "/api/topology/v2/sites/{id}": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getSiteV2"
+   },
+   "put": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "updateSite"
+   },
+   "delete": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "deleteSiteV2"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}": {
+   "get": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "getVirtualEdgeById"
+   },
+   "put": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "updateVirtualEdge"
+   },
+   "delete": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "deleteVirtualEdge"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/otp": {
+   "put": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "updateVirtualEdge_2"
+   },
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "updateVirtualEdge_1"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/manifest": {
+   "get": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "getManifest"
+   },
+   "put": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "setVersion"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/change-group/{idNewVirtualEdgeGroup}": {
+   "put": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "changeVirtualEdgeGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/ack": {
+   "put": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "ackRegistration"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getSingleVEN"
+   },
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "updateVEN"
+   },
+   "delete": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "deleteVEN"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/topology/exclude/{visibilityVenId}": {
+   "put": {
+    "tags": [
+     "VEN Topology Discovery"
+    ],
+    "operationId": "excludeAdjacentVens"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/topology/discover": {
+   "put": {
+    "tags": [
+     "VEN Topology Discovery"
+    ],
+    "operationId": "rediscoverAdjacentVens"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/reinitialize": {
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "reInitializeVirtualEdgeNode"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/recommission": {
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "recommissionVirtualEdgeNode"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/ports-configuration/{type}": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getPortsConfiguration"
+   },
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "updatePortsConfiguration"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/decommission": {
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "decommissionVirtualEdgeNode"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/change-group/{newVirtualEdgeGroupId}": {
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "changeVENGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/change-active-ve/{targetVeId}": {
+   "put": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "changeActiveVe"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk": {
+   "put": {
+    "tags": [
+     "Bulk Update"
+    ],
+    "operationId": "validateVirtualEdgeNodesBulkUpdate"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups/{id}": {
+   "get": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "getVirtualEdgeGroupById"
+   },
+   "put": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "updateVirtualEdgeGroup"
+   },
+   "delete": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "deleteVirtualEdgeGroup"
+   },
+   "patch": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "patchVirtualEdgeGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups/{id}/rebalance": {
+   "put": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "rebalanceVirtualEdgeGroup"
+   }
+  },
+  "/api/topology/v1/task-list/{id}": {
+   "put": {
+    "tags": [
+     "Task Manager"
+    ],
+    "operationId": "updateTaskList"
+   }
+  },
+  "/api/topology/v1/task-list/{id}/report": {
+   "put": {
+    "tags": [
+     "Task Manager"
+    ],
+    "operationId": "updateTaskStatus"
+   }
+  },
+  "/api/topology/v1/targets/{type}/{id}": {
+   "put": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "updateTargetSiteById"
+   }
+  },
+  "/api/topology/v1/sites": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getAllSites"
+   },
+   "put": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "updateSite_1"
+   },
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "createSite"
+   }
+  },
+  "/api/topology/v1/sites/{id}": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getSite"
+   },
+   "put": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "updateSite_2"
+   },
+   "delete": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "deleteSite"
+   }
+  },
+  "/api/topology/v1/settings": {
+   "get": {
+    "tags": [
+     "Topology Settings"
+    ],
+    "operationId": "getSettings_1"
+   },
+   "put": {
+    "tags": [
+     "Topology Settings"
+    ],
+    "operationId": "updateSettings_1"
+   }
+  },
+  "/api/topology/v1/interfaces-settings": {
+   "get": {
+    "tags": [
+     "Interface Settings"
+    ],
+    "operationId": "getGlobalInterfacesSettings"
+   },
+   "put": {
+    "tags": [
+     "Interface Settings"
+    ],
+    "operationId": "updateGlobalInterfacesSettings"
+   }
+  },
+  "/api/topology/v1/interfaces-settings/{id}": {
+   "put": {
+    "tags": [
+     "Interface Settings"
+    ],
+    "operationId": "updateInterfacesSettings"
+   }
+  },
+  "/api/topology/v1/global-credentials/{id}": {
+   "put": {
+    "tags": [
+     "Global Credentials"
+    ],
+    "operationId": "updateGlobalCredentials"
+   },
+   "delete": {
+    "tags": [
+     "Global Credentials"
+    ],
+    "operationId": "deleteGlobalCredentials"
+   }
+  },
+  "/api/topology/v1/flow-exporters/{id}": {
+   "get": {
+    "tags": [
+     "Flow Exporters"
+    ],
+    "operationId": "getFlowExporter"
+   },
+   "put": {
+    "tags": [
+     "Flow Exporters"
+    ],
+    "operationId": "updateFlowExporter"
+   },
+   "delete": {
+    "tags": [
+     "Flow Exporters"
+    ],
+    "operationId": "deleteFlowExporter"
+   }
+  },
+  "/api/topology/v1/distribution-zones": {
+   "get": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "getAllDistributionZones"
+   },
+   "put": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "updateDistributionZone"
+   },
+   "post": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "createDistributionZone"
+   }
+  },
+  "/api/topology/v1/cloud-controller/{id}": {
+   "put": {
+    "tags": [
+     "Cloud Controller"
+    ],
+    "operationId": "updateCloudController"
+   },
+   "delete": {
+    "tags": [
+     "Cloud Controller"
+    ],
+    "operationId": "deleteCloudController"
+   }
+  },
+  "/api/topology/v2/virtual-edges/bulk/validate": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "validateVirtualEdgesBulkJson"
+   }
+  },
+  "/api/topology/v2/virtual-edges/bulk/upload": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "uploadVirtualEdgesBulkJson"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/search": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "searchVirtualEdgeNodes"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/bulk/validate": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "validateVirtualEdgeNodesBulkJson"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/bulk/upload": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "uploadVirtualEdgeNodesBulkJson"
+   }
+  },
+  "/api/topology/v2/sites": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getAllSitesV2"
+   },
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "createSite_1"
+   }
+  },
+  "/api/topology/v2/sites/independent-control-mappings": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getSiteLabelIndependentControlMappings"
+   },
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "createSiteLabelIndependentControlMappings"
+   },
+   "delete": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "deleteSiteLabelIndependentControlMappings"
+   }
+  },
+  "/api/topology/v2/sites/export": {
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "exportSiteLabels"
+   }
+  },
+  "/api/topology/v2/sites/bulk": {
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "bulkCreateSiteLabels"
+   }
+  },
+  "/api/topology/v2/sites/bulk/delete": {
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "bulkDeleteSiteV2"
+   }
+  },
+  "/api/topology/v2/distribution-zones/export": {
+   "post": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "exportDistributionZones"
+   }
+  },
+  "/api/topology/v1/virtual-edges": {
+   "get": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "getVirtualEdge"
+   },
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "createVirtualEdge"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/variables": {
+   "get": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "getVeVariables"
+   },
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "publishVeVariables"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/metrics": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "metrics"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/maintenance/enable": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "enableMaintenance"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/maintenance/disable": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "disableMaintenance"
+   }
+  },
+  "/api/topology/v1/virtual-edges/{id}/heartbeat": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "heartbeat"
+   }
+  },
+  "/api/topology/v1/virtual-edges/view": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "getVirtualEdgeByPost"
+   }
+  },
+  "/api/topology/v1/virtual-edges/register": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "register"
+   }
+  },
+  "/api/topology/v1/virtual-edges/loggers/{loggerName}": {
+   "get": {
+    "tags": [
+     "Virtual Edge Logging"
+    ],
+    "operationId": "getLogger"
+   },
+   "post": {
+    "tags": [
+     "Virtual Edge Logging"
+    ],
+    "operationId": "setLoggerLevel"
+   },
+   "delete": {
+    "tags": [
+     "Virtual Edge Logging"
+    ],
+    "operationId": "useDefaultLoggerLevel"
+   }
+  },
+  "/api/topology/v1/virtual-edges/loggers/bulk": {
+   "post": {
+    "tags": [
+     "Virtual Edge Logging"
+    ],
+    "operationId": "setLoggerLevelsBulk"
+   }
+  },
+  "/api/topology/v1/virtual-edges/export": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "exportVirtualEdges"
+   }
+  },
+  "/api/topology/v1/virtual-edges/bulk/validate": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "validateVirtualEdgeBulkUpload"
+   }
+  },
+  "/api/topology/v1/virtual-edges/bulk/upload": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "VirtualEdgeBulkUpload"
+   }
+  },
+  "/api/topology/v1/virtual-edges/bulk/delete": {
+   "post": {
+    "tags": [
+     "Virtual Edges"
+    ],
+    "operationId": "bulkDeleteVirtualEdges"
+   }
+  },
+  "/api/topology/v1/virtual-edges/bulk/delete/validate": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "validateVirtualEdgeBulkDelete"
+   }
+  },
+  "/api/topology/v1/virtual-edges/bulk/change-group": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "virtualEdgeBulkChangeGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getVirtualEdgeNodes"
+   },
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "createVEN"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/topology": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getTopology"
+   },
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "topology"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/sxp-password-regenerate": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "sxpPasswordRegenerate"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/register": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "registerVEN"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/metrics": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "metrics_1"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/heartbeat": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "heartbeat_1"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/firewalls/{serialNumber}/firewall-rules": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "createOrUpdateMultipleRules"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/firewall-rules/batch": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "batchCreateOrUpdateMultipleRules"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/view": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getVirtualEdgeNodesByPost"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/export": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "exportVirtualEdgeNodes"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/validate": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "validateVirtualEdgeNodesBulkUpload"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/upload": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "VirtualEdgeNodeBulkUpload"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/recommission": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "bulkRecommissionVENs"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/force-delete": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "bulkForceDeleteVENs"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/delete": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "bulkDeleteVENs"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/delete/validate": {
+   "post": {
+    "tags": [
+     "Bulk Validation"
+    ],
+    "operationId": "validateVirtualEdgeNodeBulkDelete"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/bulk/change-group": {
+   "post": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "bulkChangeVENGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups": {
+   "get": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "getVirtualEdge_1"
+   },
+   "post": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "createVirtualEdgeGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups/{id}/maintenance/enable": {
+   "post": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "enableMaintenanceForGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups/{id}/maintenance/disable": {
+   "post": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "disableMaintenanceForGroup"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups/view": {
+   "post": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "getVirtualEdgeByPost_1"
+   }
+  },
+  "/api/topology/v1/task-list": {
+   "post": {
+    "tags": [
+     "Task Manager"
+    ],
+    "operationId": "createTaskList"
+   }
+  },
+  "/api/topology/v1/targets": {
+   "get": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "getAllTargetSites"
+   },
+   "post": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "createOrUpdateBulkTargetSite"
+   }
+  },
+  "/api/topology/v1/targets/{type}": {
+   "get": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "getTargetSite"
+   },
+   "post": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "createOrUpdateTargetSite"
+   },
+   "delete": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "deleteTargetSite"
+   }
+  },
+  "/api/topology/v1/sites/bulk/delete": {
+   "post": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "bulkDeleteSite"
+   }
+  },
+  "/api/topology/v1/global-credentials": {
+   "get": {
+    "tags": [
+     "Global Credentials"
+    ],
+    "operationId": "getAllGlobalCredentials"
+   },
+   "post": {
+    "tags": [
+     "Global Credentials"
+    ],
+    "operationId": "createGlobalCredentials"
+   }
+  },
+  "/api/topology/v1/flow-exporters": {
+   "get": {
+    "tags": [
+     "Flow Exporters"
+    ],
+    "operationId": "getAllFlowExporter"
+   },
+   "post": {
+    "tags": [
+     "Flow Exporters"
+    ],
+    "operationId": "createFlowExporter"
+   }
+  },
+  "/api/topology/v1/distribution-zones/independent-control-mappings": {
+   "get": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "getIndependentControlMappings"
+   },
+   "post": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "createIndependentControlMappings"
+   },
+   "delete": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "deleteIndependentControlMappings"
+   }
+  },
+  "/api/topology/v1/distribution-zones/bulk/delete": {
+   "post": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "bulkDeleteDistributionZone"
+   }
+  },
+  "/api/topology/v1/dashboard": {
+   "post": {
+    "tags": [
+     "Dashboard"
+    ],
+    "operationId": "getDashboardMetrics"
+   }
+  },
+  "/api/topology/v1/cloud-controller": {
+   "get": {
+    "tags": [
+     "Cloud Controller"
+    ],
+    "operationId": "getAllCloudControllers"
+   },
+   "post": {
+    "tags": [
+     "Cloud Controller"
+    ],
+    "operationId": "createCloudController"
+   }
+  },
+  "/api/topology/v2/virtual-edges/{id}/variables": {
+   "get": {
+    "tags": [
+     "Virtual Edges (VEs)"
+    ],
+    "operationId": "getReconciledVariables"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/{id}/status": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getStatus_2"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/{id}/permissions": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getPermissions"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/{id}/metrics": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getMetrics"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/{id}/details": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getDetails"
+   }
+  },
+  "/api/topology/v2/virtual-edge-nodes/{id}/configuration": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getConfiguration"
+   }
+  },
+  "/api/topology/v2/sites/tags": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getAllTags"
+   }
+  },
+  "/api/topology/v2/sites/count": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getSiteCountV2"
+   }
+  },
+  "/api/topology/v2/distribution-zones": {
+   "get": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "getAllDistributionZones_1"
+   }
+  },
+  "/api/topology/v2/distribution-zones/{id}/virtual-edge-nodes": {
+   "get": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "getVirtualEdgeNodesForDistributionZone"
+   }
+  },
+  "/api/topology/v1/virtual-edges/loggers": {
+   "get": {
+    "tags": [
+     "Virtual Edge Logging"
+    ],
+    "operationId": "getLoggersForAllVirtualEdges"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/firewall-rules": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getVirtualEdgeNodeFirewallRules"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes-overview": {
+   "get": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "getVENsOverviewResponse"
+   }
+  },
+  "/api/topology/v1/virtual-edge-groups/{id}/is-imbalanced": {
+   "get": {
+    "tags": [
+     "VE Groups"
+    ],
+    "operationId": "isImbalanced"
+   }
+  },
+  "/api/topology/v1/targets/{type}/history": {
+   "get": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "getTargetSiteHistory"
+   }
+  },
+  "/api/topology/v1/targets/types": {
+   "get": {
+    "tags": [
+     "Targets"
+    ],
+    "operationId": "getTargetTypes"
+   }
+  },
+  "/api/topology/v1/sites/count": {
+   "get": {
+    "tags": [
+     "Sites"
+    ],
+    "operationId": "getSiteCount"
+   }
+  },
+  "/api/topology/v1/global-credentials/{credentialsId}/virtual-edge-nodes": {
+   "get": {
+    "tags": [
+     "Global Credentials"
+    ],
+    "operationId": "getAllVENsForGlobalCredentials"
+   }
+  },
+  "/api/topology/v1/distribution-zones/{id}": {
+   "get": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "getDistributionZone"
+   },
+   "delete": {
+    "tags": [
+     "Distribution Zones (DZs)"
+    ],
+    "operationId": "deleteDistributionZone"
+   }
+  },
+  "/api/topology/v1/dashboard/count": {
+   "get": {
+    "tags": [
+     "Dashboard"
+    ],
+    "operationId": "getDashboardCount"
+   }
+  },
+  "/api/topology/v1/virtual-edge-nodes/{id}/force": {
+   "delete": {
+    "tags": [
+     "Virtual Edge Nodes (VENs)"
+    ],
+    "operationId": "forceDeleteVEN"
+   }
+  },
+  "/api/topology/v1/global-credentials/bulk/delete": {
+   "delete": {
+    "tags": [
+     "Global Credentials"
+    ],
+    "operationId": "bulkDeleteCredentials"
+   }
+  },
+  "/api/topology/v1/cloud-controller/bulk/delete": {
+   "delete": {
+    "tags": [
+     "Cloud Controller"
+    ],
+    "operationId": "bulkDeleteCloudControllers"
+   }
+  },
+  "/api/flows/v1/applications/{id}": {
+   "get": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "getApplication"
+   },
+   "put": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "updateApplication"
+   },
+   "delete": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "deleteApplication"
+   }
+  },
+  "/api/flows/v1/applications/{id}/definitions/{defId}": {
+   "put": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "updateDefinition"
+   },
+   "delete": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "removeDefinition"
+   }
+  },
+  "/nflowsearch/api/v1/trafficsummary": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getRawTrafficSummary"
+   }
+  },
+  "/nflowsearch/api/v1/trafficRecord": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getTrafficRecord"
+   }
+  },
+  "/nflowsearch/api/v1/trafficRecord/export": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "trafficRecordExport"
+   }
+  },
+  "/nflowsearch/api/v1/pgdata": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getPgData"
+   }
+  },
+  "/nflowsearch/api/v1/flowdata": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "flowsExport"
+   }
+  },
+  "/nflowsearch/api/v1/distributionzone": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getDistributionZoneSankey"
+   }
+  },
+  "/nflowsearch/api/v1/dashboardSummary": {
+   "post": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getDashBoardSummaryData"
+   }
+  },
+  "/api/flows/v1/noisedefinition": {
+   "get": {
+    "tags": [
+     "Noise Definitions"
+    ],
+    "operationId": "getNoiseDefinition"
+   },
+   "post": {
+    "tags": [
+     "Noise Definitions"
+    ],
+    "operationId": "updateNoiseDefinition"
+   }
+  },
+  "/api/flows/v1/applications": {
+   "get": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "listApplications"
+   },
+   "post": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "createApplication"
+   }
+  },
+  "/api/flows/v1/applications/{id}/definitions": {
+   "post": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "addDefinition"
+   }
+  },
+  "/api/flows/v1/applications/validate": {
+   "post": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "validateApplication"
+   }
+  },
+  "/nflowsearch/api/v1/unique-values": {
+   "get": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getUniqueValues"
+   }
+  },
+  "/nflowsearch/api/v1/port-information/exclusion-filter-candidates": {
+   "get": {
+    "tags": [
+     "Port Information"
+    ],
+    "operationId": "getExclusionFilterCandidates"
+   }
+  },
+  "/nflowsearch/api/v1/devices/{deviceId}/heatmap": {
+   "get": {
+    "tags": [
+     "Device Heatmap"
+    ],
+    "operationId": "getHeatmap"
+   }
+  },
+  "/nflowsearch/api/v1/capabilities": {
+   "get": {
+    "tags": [
+     "Search API"
+    ],
+    "operationId": "getCapabilities"
+   }
+  },
+  "/api/flows/v1/port-information/ports": {
+   "get": {
+    "tags": [
+     "Port Information"
+    ],
+    "operationId": "getAvailablePorts"
+   }
+  },
+  "/api/flows/v1/noisedefinition/search": {
+   "get": {
+    "tags": [
+     "Noise Definitions"
+    ],
+    "operationId": "searchNoiseDefinitions"
+   }
+  },
+  "/api/flows/v1/applications/export": {
+   "get": {
+    "tags": [
+     "Custom Applications"
+    ],
+    "operationId": "exportCsv"
+   }
+  },
+  "/api/state-sync/v1/tasks/{taskId}": {
+   "get": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "getTask"
+   },
+   "put": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "updateTask"
+   },
+   "delete": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "cancelTask"
+   }
+  },
+  "/api/state-sync/v1/tasks/{taskId}/release": {
+   "put": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "releaseExecutionOfTask"
+   }
+  },
+  "/api/state-sync/v1/tasks/{taskId}/ack": {
+   "put": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "ackExecutionOfTask_1"
+   },
+   "post": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "ackExecutionOfTask"
+   }
+  },
+  "/api/state-sync/v1/tasks/config": {
+   "get": {
+    "tags": [
+     "Task Broker Config"
+    ],
+    "operationId": "getAllConfigs"
+   },
+   "put": {
+    "tags": [
+     "Task Broker Config"
+    ],
+    "operationId": "replaceTenantDefault"
+   }
+  },
+  "/api/state-sync/v1/tasks/config/{veId}": {
+   "get": {
+    "tags": [
+     "Task Broker Config"
+    ],
+    "operationId": "getEffectiveConfig"
+   },
+   "put": {
+    "tags": [
+     "Task Broker Config"
+    ],
+    "operationId": "replaceForVe"
+   },
+   "delete": {
+    "tags": [
+     "Task Broker Config"
+    ],
+    "operationId": "deleteForVe"
+   }
+  },
+  "/api/state-sync/v1/tasks": {
+   "get": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "listTasks"
+   },
+   "post": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "createTask"
+   }
+  },
+  "/api/state-sync/v1/tasks/specs": {
+   "get": {
+    "tags": [
+     "Spec controller"
+    ],
+    "operationId": "listSpecs"
+   },
+   "post": {
+    "tags": [
+     "Spec controller"
+    ],
+    "operationId": "registerSpecs"
+   }
+  },
+  "/api/state-sync/v1/tasks/specs/{veId}": {
+   "get": {
+    "tags": [
+     "Spec controller"
+    ],
+    "operationId": "getSpec"
+   }
+  },
+  "/api/state-sync/v1/tasks/specs/site/{siteId}": {
+   "get": {
+    "tags": [
+     "Spec controller"
+    ],
+    "operationId": "getSpecBySiteId"
+   }
+  },
+  "/api/state-sync/v1/tasks/specs/group/{groupId}": {
+   "get": {
+    "tags": [
+     "Spec controller"
+    ],
+    "operationId": "getSpecGroupId"
+   }
+  },
+  "/api/state-sync/v1/tasks/next": {
+   "get": {
+    "tags": [
+     "Task Broker"
+    ],
+    "operationId": "getNextTaskForVE"
+   }
+  },
+  "/api/state-sync/v1/state": {
+   "get": {
+    "tags": [
+     "State Sync"
+    ],
+    "operationId": "getState"
+   }
+  },
+  "/api/reporting/v1/snapshot-schedules/{id}": {
+   "get": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "retrieveSnapshotSchedule"
+   },
+   "put": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "updateSnapshotSchedule"
+   },
+   "delete": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "deleteSnapshotSchedule"
+   }
+  },
+  "/api/reporting/v1/snapshot-schedules/{id}/resume": {
+   "post": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "resumeSnapshotSchedule"
+   }
+  },
+  "/api/reporting/v1/snapshot-schedules/{id}/pause": {
+   "post": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "pauseSnapshotSchedule"
+   }
+  },
+  "/api/reporting/v1/snapshot-schedules": {
+   "get": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "searchSnapshotSchedules"
+   },
+   "post": {
+    "tags": [
+     "Snapshot Schedules"
+    ],
+    "operationId": "createSnapshotSchedule"
+   }
+  },
+  "/api/reporting/v1/snapshots/{id}.pdf": {
+   "get": {
+    "tags": [
+     "Snapshots"
+    ],
+    "operationId": "retrieveSnapshotImage"
+   }
+  },
+  "/api/reporting/v1/snapshots/{id}": {
+   "get": {
+    "tags": [
+     "Snapshots"
+    ],
+    "operationId": "retrieveSnapshot"
+   }
+  },
+  "/api/reporting/v1/snapshots": {
+   "get": {
+    "tags": [
+     "Snapshots"
+    ],
+    "operationId": "searchSnapshots"
+   }
+  },
+  "/api/identity-graph-view/v2/devices/view": {
+   "post": {
+    "tags": [
+     "Devices (Read-Only)"
+    ],
+    "operationId": "devicesView"
+   }
+  },
+  "/api/identity-graph-view/v2/devices/export": {
+   "post": {
+    "tags": [
+     "Devices (Read-Only)"
+    ],
+    "operationId": "exportDevicesFromView"
+   }
+  },
+  "/api/identity-graph-view/v2/devices/aggregate": {
+   "post": {
+    "tags": [
+     "Devices (Read-Only)"
+    ],
+    "operationId": "devicesAggregate"
+   }
+  },
+  "/api/identity-graph-view/v2/devices/digest": {
+   "get": {
+    "tags": [
+     "Devices Digest"
+    ],
+    "operationId": "streamDigest"
+   }
+  },
+  "/api/identity-graph-view/v2/devices/count": {
+   "get": {
+    "tags": [
+     "Devices (Read-Only)"
+    ],
+    "operationId": "devicesCount"
+   }
+  }
+ }
+}

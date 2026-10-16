@@ -751,9 +751,12 @@
       "cloud discovery",
       "aws discovery",
       "ec2 discovery",
-      "cloud onboarding"
+      "cloud onboarding",
+      "azure discovery",
+      "azure workload discovery",
+      "azure vm discovery"
     ],
-    "context": "CCC 26.7 flow that discovers cloud workloads through a cloud connector. AWS onboarding mints an external ID and a trust policy for an IAM role, then discovery enumerates EC2 instances.",
+    "context": "Flow that discovers cloud workloads through a cloud connector. CCC 26.7 shipped AWS: onboarding mints an external ID and a trust policy for an IAM role, then discovery enumerates EC2 instances. CCC 26.9 adds Azure: the onboarding wizard validates the connection, permissions and region filter, then previews the subscriptions, resource groups and VM count a scope resolves to, both before the connector exists (`*-pre-creation`) and for an existing endpoint (`*-existing`).",
     "domain": "devices",
     "cli_recipes": [
       {
@@ -769,6 +772,21 @@
       {
         "intent": "Check the AWS permissions are sufficient",
         "command": "elisity devices validate-permissions-existing <connectorId> <endpointId>"
+      },
+      {
+        "intent": "List the Azure (ARM) permissions the connector needs",
+        "command": "elisity devices list-azure-required-permissions",
+        "notes": "Read-only. Grouped by permission tier."
+      },
+      {
+        "intent": "Test an existing Azure endpoint's connection",
+        "command": "elisity devices validate-azure-connection-existing <connectorId> <endpointId>",
+        "notes": "Read-only — the spec states nothing is persisted. Omitted body fields keep the stored values."
+      },
+      {
+        "intent": "Preview what an Azure scope resolves to before creating the connector",
+        "command": "elisity devices preview-azure-scope-pre-creation --body '{...}'",
+        "notes": "Read-only despite the POST: returns the resolved subscriptions and the number of VMs that pass the filters."
       }
     ],
     "related_commands": [
@@ -777,7 +795,15 @@
       "elisity devices get-permissions-policy",
       "elisity devices discover-ec2workloads",
       "elisity devices list-available-regions-existing",
-      "elisity devices validate-permissions-existing"
+      "elisity devices validate-permissions-existing",
+      "elisity devices list-azure-required-permissions",
+      "elisity devices list-azure-subscriptions-existing",
+      "elisity devices list-azure-regions-existing",
+      "elisity devices list-azure-resource-groups-existing",
+      "elisity devices preview-azure-scope-existing",
+      "elisity devices validate-azure-connection-existing",
+      "elisity devices validate-azure-permissions-existing",
+      "elisity devices validate-azure-region-permissions-existing"
     ]
   },
   {
@@ -820,9 +846,11 @@
       "report snapshot",
       "scheduled report",
       "snapshot schedule",
-      "pdf report"
+      "pdf report",
+      "snapshot markdown",
+      "snapshot evidence"
     ],
-    "context": "Point-in-time reporting artifact introduced in CCC 26.7, optionally produced on a schedule and retrievable as PDF. Served under /api/reporting/v1/snapshots; the CLI groups these under `system` because `reporting` is the hand-coded GraphQL group.",
+    "context": "Point-in-time reporting artifact introduced in CCC 26.7, optionally produced on a schedule. Retrievable as PDF, and from CCC 26.9 also as Markdown and as a JSON evidence package. Served under /api/reporting/v1/snapshots; the CLI groups these under `system` because `reporting` is the hand-coded GraphQL group.",
     "domain": "system",
     "cli_recipes": [
       {
@@ -831,7 +859,18 @@
       },
       {
         "intent": "Download a snapshot as PDF",
-        "command": "elisity system retrieve-snapshot-image <id>"
+        "command": "elisity system retrieve-snapshot-pdf <id>",
+        "notes": "Renamed from retrieve-snapshot-image in CCC 26.9."
+      },
+      {
+        "intent": "Get a snapshot as Markdown",
+        "command": "elisity system retrieve-snapshot-markdown <id>",
+        "notes": "Added in CCC 26.9."
+      },
+      {
+        "intent": "Get a snapshot's evidence package",
+        "command": "elisity system retrieve-snapshot-evidence <id>",
+        "notes": "Added in CCC 26.9. JSON."
       },
       {
         "intent": "Pause a snapshot schedule",
@@ -842,7 +881,9 @@
     "related_commands": [
       "elisity system search-snapshots",
       "elisity system retrieve-snapshot",
-      "elisity system retrieve-snapshot-image",
+      "elisity system retrieve-snapshot-pdf",
+      "elisity system retrieve-snapshot-markdown",
+      "elisity system retrieve-snapshot-evidence",
       "elisity system search-snapshot-schedules",
       "elisity system create-snapshot-schedule",
       "elisity system pause-snapshot-schedule",
@@ -910,6 +951,121 @@
       "elisity policy create-vendor",
       "elisity policy update-vendor",
       "elisity policy delete-vendor"
+    ]
+  },
+  {
+    "term": "Workload Distribution Zone",
+    "synonyms": [
+      "workload DZ",
+      "workload zone",
+      "cloud distribution zone"
+    ],
+    "context": "Distribution Zone that holds cloud workloads discovered through a workload-discovery connector endpoint, added in CCC 26.9. Unlike a network Distribution Zone it cannot be assigned to a VEN, VE or VE Group, so `topology get-all-distribution-zones` leaves it out unless asked. Identity Graph lists them under /api/identity-graph/v1/workload-distribution-zones.",
+    "enum_value": null,
+    "domain": "topology",
+    "cli_recipes": [
+      {
+        "intent": "List Workload Distribution Zones",
+        "command": "elisity topology list-workload-distribution-zones",
+        "notes": "Optional --id matches either the zone's numericId or its UUID."
+      },
+      {
+        "intent": "Check whether a Workload Distribution Zone is in use",
+        "command": "elisity topology get-workload-distribution-zone-usage <id>",
+        "notes": "Returns inUse plus every connector endpoint that references the zone — check this before deleting one."
+      },
+      {
+        "intent": "Include Workload DZs in the full Distribution Zone listing",
+        "command": "elisity topology get-all-distribution-zones --includeWorkload true"
+      }
+    ],
+    "related_commands": [
+      "elisity topology list-workload-distribution-zones",
+      "elisity topology get-workload-distribution-zone-usage",
+      "elisity topology get-all-distribution-zones",
+      "elisity devices get-workloads-view"
+    ]
+  },
+  {
+    "term": "Tanium Sensor Mapping",
+    "synonyms": [
+      "tanium sensor",
+      "tanium mapping",
+      "sensor mapping",
+      "tanium sensor catalog"
+    ],
+    "context": "Mapping of a Tanium sensor (and one of its registered parameter combinations) to a device attribute on the Tanium connector, added in CCC 26.9. The CLI exposes the reads behind the mapping editor: the live sensor catalog, one sensor's detail, and a probe that shows what a draft mapping would return for live devices. Served under /api/identity-graph/v1/connectors/tanium/.",
+    "enum_value": null,
+    "domain": "connectors",
+    "cli_recipes": [
+      {
+        "intent": "Fetch the Tanium sensor catalog",
+        "command": "elisity connectors fetch-tanium-sensor-catalog --harvested_only true --body '{...}'",
+        "notes": "Read-only despite the POST: a live read from Tanium. The body carries the connector endpoint block (credentials)."
+      },
+      {
+        "intent": "Look up one Tanium sensor by exact name",
+        "command": "elisity connectors fetch-tanium-sensor-detail --body '{...}'",
+        "notes": "Read-only. Lists the parameter combinations Tanium has registered; only harvested ones return data."
+      },
+      {
+        "intent": "Probe a draft sensor mapping against live devices",
+        "command": "elisity connectors probe-tanium-sensor-mapping --body '{...}'",
+        "notes": "Read-only per the spec: reports per device what the attribute would hold and never affects connector health."
+      }
+    ],
+    "related_commands": [
+      "elisity connectors fetch-tanium-sensor-catalog",
+      "elisity connectors fetch-tanium-sensor-detail",
+      "elisity connectors probe-tanium-sensor-mapping"
+    ]
+  },
+  {
+    "term": "AD Group",
+    "synonyms": [
+      "active directory group",
+      "ad groups",
+      "ad group enablement",
+      "enable ad groups",
+      "ad group count"
+    ],
+    "context": "Active Directory group as listed by the AD connector service. CCC 26.9 adds a groups view with counts and member listings, per-group enable/disable (one row, or many through Bulk Actions), an 'enable all groups by default' setting for newly discovered groups, and an XLSX export. Served under /api/ad-connector-service/v1/groups.",
+    "enum_value": null,
+    "domain": "ad",
+    "cli_recipes": [
+      {
+        "intent": "Count AD groups",
+        "command": "elisity ad get-groups-count"
+      },
+      {
+        "intent": "List AD groups",
+        "command": "elisity ad get-groups-view --size 50",
+        "notes": "Read-only despite the POST. Filter with --globalFilter."
+      },
+      {
+        "intent": "List the users or devices that are direct members of a group",
+        "command": "elisity ad get-group-users <id>",
+        "notes": "`ad get-group-devices <id>` for devices."
+      },
+      {
+        "intent": "Read the 'enable all groups by default' setting",
+        "command": "elisity ad get-groups-default-enabled"
+      },
+      {
+        "intent": "Enable or disable groups",
+        "command": "elisity ad set-groups-enabled --body '{\"ids\": [<id>], \"enabled\": true}'",
+        "notes": "State-changing — get human approval first. `ad set-groups-default-enabled` changes the default for new groups and is described in the spec as a master reset."
+      }
+    ],
+    "related_commands": [
+      "elisity ad get-groups-count",
+      "elisity ad get-groups-view",
+      "elisity ad get-group-users",
+      "elisity ad get-group-devices",
+      "elisity ad get-groups-default-enabled",
+      "elisity ad set-groups-default-enabled",
+      "elisity ad set-groups-enabled",
+      "elisity ad export-groups"
     ]
   }
 ]
