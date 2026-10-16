@@ -156,7 +156,7 @@ When a human asks for something using a phrase you don't immediately recognise:
    Do not act on a guess for non-trivial operations.
 
 4. **Never paraphrase a UI feature into a plausible-but-fake CLI command.**
-   The CLI has 658 commands; if a verb you imagine isn't in `--help`, it
+   The CLI has 650 commands; if a verb you imagine isn't in `--help`, it
    doesn't exist. The honesty rule is non-negotiable — fabricated commands
    waste human review cycles and damage trust.
 
@@ -358,7 +358,7 @@ gate: report the exact command to the human, get explicit go/no-go, then run.
   suggestion set ("Delete and Create all suggestions"), so both require
   `--confirm` as well
 - `import-*` / `cancel-import`, `upload-*` (bulk VE/VEN JSON, AD agent logs)
-- `sync-*`, `refresh-*`, `force-sync`, `resync`, `re-initialize-*`,
+- `sync-*`, `refresh-*`, `resync`, `re-initialize-*`,
   `discover-ec2workloads` — these trigger real work against live infrastructure
   even though they create nothing directly
 - `restart` (restarts an AD connector), `pull-logs`, `save-activity-logs`
@@ -366,13 +366,6 @@ gate: report the exact command to the human, get explicit go/no-go, then run.
 - `generate-external-id` — mints and persists an AWS external ID / account ID
 - `create-access-policy-review`, `create-policy-review` — write an audit-trail
   record ("configuration review completed"); the policy itself is not modified
-- **Data-plane ingestion — never run on your own initiative.** `devices attach-workload`,
-  `devices attach-workloads`, `flows accept-flows`, `flows accept-flow-data` and
-  `flows accept-app-flow-data` are the calls a VE/VEN makes to report workloads and
-  flows. Run manually they write synthetic data into the tenant, and
-  `attach-workload` *replaces* the workload's stored interface list (interfaces
-  missing from the body are deleted). The same goes for the older device
-  `attach` / `attached`. If a human asks for one, confirm they mean it
 
 A safe rule of thumb: if a command in the glossary mapping starts with anything
 other than `get-`, `list-`, `read-`, `search-`, `count-`, or `export-`, get
@@ -410,7 +403,7 @@ spec:
 Anything not in this table gets the rule of thumb. When a new command appears
 and you cannot tell, treat it as destructive and ask.
 
-**The direction that matters holds, and is tested.** Of the 416 state-changing-by-verb
+**The direction that matters holds, and is tested.** Of the 408 state-changing-by-verb
 commands, 61 are classified safe by the prefix rule above, and every one of them is
 genuinely a read — no destructive command is misclassified as safe
 (`tests/test_command_invariants.py::TestConfirmGate::test_the_safe_prefix_rule_never_clears_a_destructive_command`).

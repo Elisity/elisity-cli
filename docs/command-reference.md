@@ -1,14 +1,14 @@
 # Elisity CLI -- Command Reference
 
-> The 631 REST commands below are auto-generated from the Elisity CCC OpenAPI
+> The 623 REST commands below are auto-generated from the Elisity CCC OpenAPI
 > specification. The `reporting` group (17 commands) is hand-coded against the
 > CCC GraphQL endpoint at `/api/reporting/v1/data` and is NOT listed in this
 > reference — see [user-guide.md](user-guide.md) section 9 for the full
 > reporting catalog.
 >
-> **655 commands** total: 631 auto-generated REST + 17 hand-coded GraphQL
+> **647 commands** total: 623 auto-generated REST + 17 hand-coded GraphQL
 > reporting + 7 CLI-native (auth + config). 11 groups total. (Excludes the 3
-> CLI-native `glossary` commands; see README for the full 658-command count.)
+> CLI-native `glossary` commands; see README for the full 650-command count.)
 >
 > This file is generated — run `python3 tools/gen_command_reference.py` after
 > regenerating commands. Do not edit it by hand.
@@ -235,7 +235,7 @@
 | topology | `is-imbalanced` | Check if Virtual Edge Group is imbalanced |
 | topology | `list-workload-distribution-zones` | List Workload Distribution Zones known to Identity Graph |
 
-### Create operations (271 commands)
+### Create operations (263 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
@@ -280,10 +280,6 @@
 | connectors | `validate-connector-endpoint-configuration` | Validate connector endpoint configuration |
 | connectors | `validate-endpoint-for-connector` | Validate endpoint configuration for existing connector |
 | connectors | `validate-endpoint-pre-creation` | Validate endpoint configuration before connector creation |
-| devices | `attach` | Attach device by MAC or create new one if not exists |
-| devices | `attach-workload` | Attach a workload reported by a VEN, creating it if it does not exist |
-| devices | `attach-workloads` | Attach a batch of workloads reported by a VEN |
-| devices | `attached` | Attach devices by MAC or create new ones if not exists |
 | devices | `bulk-create-devices` | Create new devices |
 | devices | `bulk-create-devices-from-file` | Create new devices from XLSX file |
 | devices | `create` | Create a new suppression entry |
@@ -335,9 +331,6 @@
 | devices | `validate-azure-region-permissions-pre-creation` | Validate a new endpoint's region filter against its subscriptions (pre-creation) |
 | devices | `validate-permissions-existing` | Validate AWS permissions for an existing connector endpoint |
 | devices | `validate-permissions-pre-creation` | Validate AWS permissions for a new endpoint (pre-creation) |
-| flows | `accept-app-flow-data` | POST /flow/api/appflowdata |
-| flows | `accept-flow-data` | POST /flow/api/flowdata |
-| flows | `accept-flows` | POST /api/flows/v1/flows |
 | flows | `flows-export` | Generate flows export as CSV |
 | flows | `get-dash-board-summary-data` | POST /nflowsearch/api/v1/dashboardSummary |
 | flows | `get-distribution-zone-sankey` | Get distribution zone sankey data |
@@ -405,7 +398,6 @@
 | policy | `export-security-profiles` | Generate a Security Profiles CSV export |
 | policy | `export-security-rules` | Generate a CSV export of one Security Profile's rules |
 | policy | `export-templates` | Export Policy Group Templates to CSV |
-| policy | `force-sync` | POST /api/policy/v1/state/resync |
 | policy | `get-devices-current-pg-and-new-pg-after-evaluation` | Get current and expected policy groups after the devices will be unlocked |
 | policy | `get-matrix` | Get matrix data |
 | policy | `get-matrix-with-search` | Get matrix data with search filters |
@@ -803,16 +795,12 @@ Profile and configuration management.
 | `validate-endpoint-for-connector` | Validate endpoint configuration for existing connector |
 | `validate-endpoint-pre-creation` | Validate endpoint configuration before connector creation |
 
-### devices (107 commands)
+### devices (103 commands)
 
 | Command | Description |
 |---------|-------------|
 | `add-device-unique-attribute-value` | Add device attribute unique value |
 | `apply-custom-oui-mappings` | Upload custom OUI mappings and override existing ones |
-| `attach` | Attach device by MAC or create new one if not exists |
-| `attach-workload` | Attach a workload reported by a VEN, creating it if it does not exist |
-| `attach-workloads` | Attach a batch of workloads reported by a VEN |
-| `attached` | Attach devices by MAC or create new ones if not exists |
 | `bulk-create-devices` | Create new devices |
 | `bulk-create-devices-from-file` | Create new devices from XLSX file |
 | `bulk-delete-devices` | Delete device |
@@ -915,13 +903,10 @@ Profile and configuration management.
 | `validate-permissions-existing` | Validate AWS permissions for an existing connector endpoint |
 | `validate-permissions-pre-creation` | Validate AWS permissions for a new endpoint (pre-creation) |
 
-### flows (18 commands)
+### flows (15 commands)
 
 | Command | Description |
 |---------|-------------|
-| `accept-app-flow-data` | POST /flow/api/appflowdata |
-| `accept-flow-data` | POST /flow/api/flowdata |
-| `accept-flows` | POST /api/flows/v1/flows |
 | `flows-export` | Generate flows export as CSV |
 | `get-available-ports` | Get all available ports and their names |
 | `get-capabilities` | Get analytics capabilities |
@@ -974,7 +959,7 @@ Profile and configuration management.
 | `update-suggestion` | Update Suggestion |
 | `update-suggestion-put` | Update Network Policy Suggestion |
 
-### policy (191 commands)
+### policy (190 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -1044,7 +1029,6 @@ Profile and configuration management.
 | `export-security-profiles` | Generate a Security Profiles CSV export |
 | `export-security-rules` | Generate a CSV export of one Security Profile's rules |
 | `export-templates` | Export Policy Group Templates to CSV |
-| `force-sync` | POST /api/policy/v1/state/resync |
 | `get-access-policies` | List access policies on a policy set (the Access Policy column) |
 | `get-access-policies-for-profile` | Get access policies using this profile (where used) |
 | `get-all` | Get all access policy security profiles |

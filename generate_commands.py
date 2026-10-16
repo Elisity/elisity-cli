@@ -44,15 +44,31 @@ HANDCODED_GROUPS = ("glossary", "reporting")
 
 DEVICE_PATH = "/api/identity-graph/v1/devices/{id}"
 
-# PUT replaces a device's IP and VEN, so an attribute-only body detaches a
-# dynamically attached device. The CLI exposes no PUT for these operations.
+# Operations the CLI does not generate commands for.
 #
-# Each omitted operation maps to the operation that replaces it. Generation
-# fails when a spec has the omitted operation but not its replacement
-# (assert_omitted_operations_replaced): the published CCC 26.9 spec declares the
-# device PUT and no PATCH — the PATCH is a 26.9 hot patch — so omitting the PUT
-# without the spec overlay would silently drop `devices update-device`.
-OMITTED_OPERATIONS = {("put", DEVICE_PATH): ("patch", DEVICE_PATH)}
+# An entry maps the omitted operation to the operation that replaces it, or to
+# None when nothing does. The device PUT is replaced by the PATCH: PUT replaces
+# the device's IP and VEN, so an attribute-only body detaches a dynamically
+# attached device. Generation fails when a spec has an omitted operation but not
+# its replacement (assert_omitted_operations_replaced): the published CCC 26.9
+# spec declares the device PUT and no PATCH — the PATCH is a 26.9 hot patch — so
+# omitting the PUT without the spec overlay would silently drop
+# `devices update-device`.
+#
+# The None entries are platform-internal operations (Virtual Edge reporting and
+# platform maintenance). They are not part of the customer-facing API, so the
+# CLI exposes no command for them and nothing replaces them.
+OMITTED_OPERATIONS = {
+    ("put", DEVICE_PATH): ("patch", DEVICE_PATH),
+    ("post", "/api/identity-graph/v1/devices/attach"): None,
+    ("post", "/api/identity-graph/v1/devices/attached"): None,
+    ("post", "/api/identity-graph/v1/workloads/attach"): None,
+    ("post", "/api/identity-graph/v1/workloads/attached"): None,
+    ("post", "/api/flows/v1/flows"): None,
+    ("post", "/flow/api/flowdata"): None,
+    ("post", "/flow/api/appflowdata"): None,
+    ("post", "/api/policy/v1/state/resync"): None,
+}
 
 # Spec overlays add operations a tenant serves but its published spec does not
 # declare yet. Each is checked in with its provenance and applied with
@@ -253,9 +269,10 @@ TAG_TO_GROUP = {
     # Sits beside "Security Profile": same rule-search/export surface, served
     # by the policy service under /api/policy/v2/.
     "Access Policy Security Profile": "policy",
-    # Azure onboarding and the workload attach/attached calls are the same
-    # cloud-workload-discovery feature the 26.7 Workloads / AWS Setup tags
-    # already keep in `devices` (see the note above them).
+    # Azure onboarding is the same cloud-workload-discovery feature the 26.7
+    # Workloads / AWS Setup tags already keep in `devices` (see the note above
+    # them). The "Workload - Attach" operations are platform-internal and sit in
+    # OMITTED_OPERATIONS; the tag is mapped so the spec stays fully mapped.
     "Azure Workload Discovery": "devices",
     "Workload - Attach": "devices",
     # Served under /api/identity-graph/v1/connectors/tanium/, configures a
@@ -265,8 +282,8 @@ TAG_TO_GROUP = {
     # Distribution zones are a topology concept; the fallback would have put
     # these two read-only calls in `devices` under the names `list`/`usage`.
     "Workload Distribution Zones": "topology",
-    # Flow ingestion (/api/flows/v1/flows, /flow/api/*flowdata). The fallback
-    # split these between `flows` and `system` by path prefix.
+    # Flow ingestion (/api/flows/v1/flows, /flow/api/*flowdata): platform-internal,
+    # in OMITTED_OPERATIONS; the tag is mapped so the spec stays fully mapped.
     "ingest-controller": "flows",
 }
 
@@ -492,22 +509,12 @@ def resolve_parameter_names(method: str, path_params: list, query_params: list,
 # Regenerating the 26.7 spec with this map changes exactly one command: the
 # suppression-list GET (`get-users` in 26.7) becomes `search-suppression-list`.
 # Every other path below is new in CCC 26.9 (the device PATCH via the 26.9
-# hot-patch overlay), and the two device-attach pins name what 26.7 already
-# emitted. assert_overrides_emitted() fails generation if a
+# hot-patch overlay). assert_overrides_emitted() fails generation if a
 # collision would make dedupe_command_names() suffix one of these names.
 COMMAND_NAME_OVERRIDES = {
     # ENG-31333: the device PATCH (omitted ip/venId keep the current value)
     # takes the `update-device` name; the PUT is in OMITTED_OPERATIONS.
     ("PATCH", DEVICE_PATH): "update-device",
-    # CCC 26.9 added /v1/workloads/attach[ed] with operationIds `attach` and
-    # `attached`, which moved the shipped device commands to `attach-post` /
-    # `attached-post` and gave their names to the workload calls. Pinned so the
-    # device commands keep their names whatever the workload ids become.
-    ("POST", "/api/identity-graph/v1/devices/attach"): "attach",
-    ("POST", "/api/identity-graph/v1/devices/attached"): "attached",
-    ("POST", "/api/identity-graph/v1/workloads/attach"): "attach-workload",
-    # Batch form; the plural follows create-security-profile/-profiles.
-    ("POST", "/api/identity-graph/v1/workloads/attached"): "attach-workloads",
     # Suppression List: 26.9 renamed the GET's operationId getUsers -> search
     # (which would ship as `devices search`) and added an export with
     # operationId `export`. `get-users` never fit — it lists suppression
@@ -577,10 +584,6 @@ COMMAND_NAME_OVERRIDES = {
         "get-groups-default-enabled",
     ("PUT", "/api/ad-connector-service/v1/groups/default-enabled"):
         "set-groups-default-enabled",
-    # Flow ingestion: two operationIds sanitize to `accept-flows`.
-    ("POST", "/api/flows/v1/flows"): "accept-flows",
-    ("POST", "/flow/api/flowdata"): "accept-flow-data",
-    ("POST", "/flow/api/appflowdata"): "accept-app-flow-data",
 }
 
 
@@ -1117,17 +1120,19 @@ def assert_overrides_emitted(groups: dict) -> None:
 def assert_omitted_operations_replaced(spec: dict) -> None:
     """Fail generation if an omitted operation's replacement is missing.
 
-    OMITTED_OPERATIONS drops an operation because another one replaces it. A
+    OMITTED_OPERATIONS drops an operation either because another one replaces
+    it or because it is platform-internal (value None). For the first kind, a
     spec that has the omitted operation but not the replacement would lose the
     command outright — the published 26.9 spec has the device PUT and no PATCH,
     so `devices update-device` would vanish while the count still looked
-    plausible.
+    plausible. Entries with no replacement are omitted unconditionally.
     """
     paths = spec.get("paths") or {}
     missing = [
         (omitted, replacement)
         for omitted, replacement in OMITTED_OPERATIONS.items()
-        if omitted[0] in (paths.get(omitted[1]) or {})
+        if replacement is not None
+        and omitted[0] in (paths.get(omitted[1]) or {})
         and replacement[0] not in (paths.get(replacement[1]) or {})
     ]
     if missing:

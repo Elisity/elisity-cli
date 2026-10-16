@@ -1,6 +1,6 @@
 # Getting Started with the Elisity CCC CLI
 
-The Elisity CCC CLI is a command-line interface to the Elisity Cloud Control Center API. It provides 658 commands across 12 command groups covering topology, policy, devices, connectors, AD/Entra integration, traffic flows, insights, reporting, and system operations. The command set is generated from the CCC 26.9 OpenAPI spec.
+The Elisity CCC CLI is a command-line interface to the Elisity Cloud Control Center API. It provides 650 commands across 12 command groups covering topology, policy, devices, connectors, AD/Entra integration, traffic flows, insights, reporting, and system operations. The command set is generated from the CCC 26.9 OpenAPI spec.
 
 This guide walks you through installation, configuration, authentication, and your first commands.
 
@@ -344,4 +344,4 @@ elisity --debug topology get-all-sites
 
 - **[User Guide](user-guide.md)** — Detailed usage patterns, scripting recipes, and advanced workflows
 - **[Configuration Reference](configuration.md)** — Profile options, environment variables, SSL settings
-- **[Command Reference](command-reference.md)** — Full list of all 658 commands with parameters and examples
+- **[Command Reference](command-reference.md)** — Full list of all 650 commands with parameters and examples

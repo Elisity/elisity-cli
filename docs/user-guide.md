@@ -42,7 +42,7 @@ Out of scope for this guide:
 - Product positioning, architecture explanations, or "why microsegmentation". Those
   belong in product docs.
 - A command-by-command reference. See [Command Reference](command-reference.md) for
-  all 658 commands.
+  all 650 commands.
 - Building and deploying the CLI itself. See the repository README for development
   setup.
 
@@ -1449,7 +1449,7 @@ HTTP 403: {"error":"Forbidden","message":"User does not have required scope: pol
 - *Resource not found* — the ID you passed doesn't exist. Common after a delete
   or in cross-tenant scripts where the IDs don't match.
 - *Endpoint not enabled on this CCC version* — older CCC tenants may not have all
-  658 commands implemented. Run the corresponding `--help` to see what's available.
+  650 commands implemented. Run the corresponding `--help` to see what's available.
 
 ```text
 HTTP 404: {"error":"Not Found"}
@@ -2281,7 +2281,7 @@ code `0`.
 
 ## Appendix A: full command tree
 
-The CLI exposes 658 commands. The full reference, including parameters and return
+The CLI exposes 650 commands. The full reference, including parameters and return
 types for each, lives at:
 
 - [Command Reference](command-reference.md)
@@ -2309,7 +2309,7 @@ Usage: elisity [OPTIONS] COMMAND [ARGS]...
   Elisity CCC CLI — command-line interface to the Cloud Control Center API.
 
   Manages topology, policies, devices, connectors, AD/Entra integration,
-  traffic flows, and system operations — 658 commands across 12 groups.
+  traffic flows, and system operations — 650 commands across 12 groups.
 
   Configuration:   Set CCC_BASE_URL, CCC_CLIENT_ID, CCC_CLIENT_SECRET env
   vars, or   run 'elisity config set-profile' to store credentials.
@@ -2698,7 +2698,7 @@ Judgment calls made while writing this guide. Surfaced here for reviewer awarene
   blob to keep the file tenant-neutral. Other capture data (UUIDs, timestamps,
   numericIds) is preserved verbatim.
 - **Sample 18 root-help command count.** The root help text now reads "658
-  commands" (631 REST + 17 GraphQL reporting + 7 CLI-native auth/config + 3
+  commands" (623 REST + 17 GraphQL reporting + 7 CLI-native auth/config + 3
   CLI-native glossary) after the CCC 26.9 regeneration. The sample in this guide
   was captured against the CCC 26.3 command set, when the same line read "466
   commands" (436 REST); the prose has been updated to 658 but the captured block

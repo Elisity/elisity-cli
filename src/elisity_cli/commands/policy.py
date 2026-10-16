@@ -2826,26 +2826,6 @@ def cmd_create_vendor(ctx, body_data, body_file, cmd_fmt, cmd_query):
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
-@group.command("force-sync")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_force_sync(ctx, cmd_fmt, cmd_query):
-    """POST /api/policy/v1/state/resync"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/policy/v1/state/resync"
-    params = None
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
 @group.command("get-all-security-profiles-as-nd-json")
 @click.option("--excludeReflections", "excludeReflections", type=bool, default=False, help="excludeReflections")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)

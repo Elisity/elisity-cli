@@ -191,7 +191,6 @@ class TestConfirmGate:
         """
         assert counts["confirmGate"]["nameDestructivePathNot"] == []
         assert set(counts["confirmGate"]["ruledNonDestructiveDespiteName"]) == {
-            "policy force-sync",
             "topology validate-virtual-edge-bulk-delete",
             "topology validate-virtual-edge-node-bulk-delete",
         }
@@ -225,7 +224,9 @@ class TestConfirmGate:
                     )
         # CCC 26.9: 375 -> 416 and 39 -> 61. The 22 new safe-prefixed POSTs are
         # the search-/export-/list-azure-/get-*-metrics-summary/AD group reads.
-        assert state_changing == 416, state_changing
+        # 416 -> 408 once the eight platform-internal POSTs in OMITTED_OPERATIONS
+        # stopped being generated; none of them carried a safe prefix.
+        assert state_changing == 408, state_changing
         assert safe_prefixed == 61, safe_prefixed
         assert cleared_but_destructive == [], (
             "AGENTS.md's safe-prefix rule clears a DESTRUCTIVE command: "
@@ -1120,14 +1121,19 @@ class TestCommandNameOverrides:
             assert key in emitted, f"override for {key} matches no 26.9 operation"
             assert emitted[key][1] == want, (key, emitted[key])
 
-    def test_shipped_device_attach_names_survive_26_9(self):
-        emitted = _emitted_names(_spec_269())
-        assert emitted[("POST", "/api/identity-graph/v1/devices/attach")] == ("devices", "attach")
-        assert emitted[("POST", "/api/identity-graph/v1/devices/attached")] == ("devices", "attached")
-        assert emitted[("POST", "/api/identity-graph/v1/workloads/attach")] == (
-            "devices", "attach-workload")
-        assert emitted[("POST", "/api/identity-graph/v1/workloads/attached")] == (
-            "devices", "attach-workloads")
+    def test_platform_internal_operations_are_not_emitted(self):
+        """The platform-internal operations in OMITTED_OPERATIONS (value None)
+        get no command, in 26.9 and in 26.7 where some of them already existed."""
+        from generate_commands import OMITTED_OPERATIONS
+
+        internal = {(m.upper(), p) for (m, p), repl in OMITTED_OPERATIONS.items()
+                    if repl is None}
+        assert ("POST", "/api/identity-graph/v1/workloads/attach") in internal
+        assert ("POST", "/api/identity-graph/v1/devices/attach") in internal
+        assert ("POST", "/api/policy/v1/state/resync") in internal
+        for spec in (_spec_269(), _spec_267()):
+            emitted = _emitted_names(spec)
+            assert not internal & set(emitted), sorted(internal & set(emitted))
 
     def test_no_26_9_addition_ships_a_generic_or_suffixed_name(self):
         old = _emitted_names(_spec_267())

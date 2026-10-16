@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/mkorenbaum/elisity-cli/actions/workflows/test.yml/badge.svg)](https://github.com/mkorenbaum/elisity-cli/actions/workflows/test.yml)
 
-Command-line interface to the Elisity Cloud Control Center (CCC) API. Provides complete coverage of the CCC API surface — all 631 REST endpoints from the OpenAPI spec, plus 17 hand-coded GraphQL commands for the `/api/reporting/v1/data` endpoint (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors) that the OpenAPI spec doesn't include, plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
+Command-line interface to the Elisity Cloud Control Center (CCC) API. Covers the customer-facing CCC API surface — all 623 REST endpoints from the OpenAPI spec that customers call (8 platform-internal operations are left out, see [Omitted operations](#omitted-operations)), plus 17 hand-coded GraphQL commands for the `/api/reporting/v1/data` endpoint (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors) that the OpenAPI spec doesn't include, plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
 
 Generated from the **CCC 26.9 (hot-patched)** OpenAPI spec: the published 26.9 spec plus two checked-in overlays. One adds the device PATCH that 26.9 tenants are hot-patched to serve, so `devices update-device` sends **PATCH**. The other gives the three AD group views the JSON body the server requires and the spec omits. See [What changed in CCC 26.9](#what-changed-in-ccc-269) for the command-level delta, and [What changed in CCC 26.7](#what-changed-in-ccc-267) for the release before it.
 
@@ -10,7 +10,7 @@ Generated from the **CCC 26.9 (hot-patched)** OpenAPI spec: the published 26.9 s
 
 ## Features
 
-- **658 commands** total (631 auto-generated from the CCC OpenAPI spec + 17 hand-coded GraphQL reporting commands + 7 CLI-native auth/config + 3 CLI-native glossary commands)
+- **650 commands** total (623 auto-generated from the CCC OpenAPI spec + 17 hand-coded GraphQL reporting commands + 7 CLI-native auth/config + 3 CLI-native glossary commands)
 - **Multi-profile configuration** — manage multiple CCC environments (prod, staging, lab)
 - **4 output formats** — JSON (default), table, YAML, CSV
 - **JMESPath filtering** — reshape and filter output with `-q` expressions
@@ -101,12 +101,12 @@ curl -H "Authorization: Bearer $TOKEN" https://your-ccc.idp01.elisity.io/api/top
 | Group | Commands | Description |
 |-------|----------|-------------|
 | `topology` | 158 | Sites, distribution zones, workload distribution zones, VE groups, VEs, VENs, VE/VEN metrics summaries, flow exporters, cloud controllers, interface + topology settings |
-| `policy` | 191 | Policy sets, policies, policy groups, security profiles + access policy security profiles (search/export), policy reviews, site labels, label management, access policy (LPA), custom applications, vendors |
-| `devices` | 107 | Device CRUD, bulk operations, enrichment, suppression list, custom attributes, cloud workloads + AWS and Azure discovery, workload attach |
+| `policy` | 190 | Policy sets, policies, policy groups, security profiles + access policy security profiles (search/export), policy reviews, site labels, label management, access policy (LPA), custom applications, vendors |
+| `devices` | 103 | Device CRUD, bulk operations, enrichment, suppression list, custom attributes, cloud workloads + AWS and Azure discovery |
 | `ad` | 57 | Active Directory / Entra ID connectors, agents (V2), agent logs, subscription refresh, AD group enablement |
 | `connectors` | 38 | Connector configuration, custom connector devices/inventory, import/export, connectivity, Tanium sensor mappings |
 | `insights` | 31 | Policy suggestions, dynamic/network group recommendations |
-| `flows` | 18 | Traffic flow search, device state, noise definitions, device heatmap, flow ingestion |
+| `flows` | 15 | Traffic flow search, device state, noise definitions, device heatmap |
 | `system` | 31 | Tasks, specs, state sync, task broker config, report snapshots (PDF, Markdown, evidence) + schedules |
 | `reporting` | 17 | **GraphQL** — Zero Trust scores, site KPIs, threat vectors, traffic-by-PG/IP. Hand-coded (the CCC reporting API is GraphQL, not in OpenAPI). |
 | `glossary` | 3 | Map Elisity UI terminology to CLI commands |
@@ -344,9 +344,10 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 | Spec operations | 583 | 631 |
 | Hot-patch overlay operations | — | 1 |
 | Operations given a request body by overlay | — | 3 |
-| Generated REST commands | 583 | 631 |
+| Operations omitted from the CLI (platform-internal) | — | 8 |
+| Generated REST commands | 583 | 623 |
 
-**49 commands added, 1 removed, 84 operations changed**, and `devices update-device` changed HTTP method.
+**44 commands added, 4 removed, 84 operations changed**, and `devices update-device` changed HTTP method.
 
 ### `devices update-device` sends PATCH (26.9 hot patch)
 
@@ -357,6 +358,17 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 - **Where the PATCH comes from.** The published 26.9 spec predates the hot patch and declares only `PUT` and `DELETE` at that path. The generator adds the PATCH from [`spec-overlays/ccc-26.9-hotpatch-device-patch.json`](spec-overlays/ccc-26.9-hotpatch-device-patch.json), cloned from the PUT (parameters, request body), with its provenance recorded in the overlay. Without `--overlay` the generator refuses the 26.9 spec rather than silently dropping `update-device`.
 - `--target-enrichment-layer` now reaches the request: generated PATCH commands pass query parameters through.
 - The overlay makes `spec_diff.py` list the PATCH as an added `devices update-device`. It is not new: the command existed and now uses a different method, so it is not counted in the 49 additions below.
+
+### Omitted operations
+
+Eight operations in the 26.9 spec are internal to the platform (Virtual Edge reporting and platform maintenance) and are not part of the customer-facing API. The CLI generates no command for them. They are listed with no replacement in `OMITTED_OPERATIONS` (`generate_commands.py`):
+
+- `POST /api/identity-graph/v1/devices/attach` and `.../devices/attached` (previously `devices attach` / `devices attached`)
+- `POST /api/identity-graph/v1/workloads/attach` and `.../workloads/attached` (new in 26.9)
+- `POST /api/flows/v1/flows`, `POST /flow/api/flowdata` and `POST /flow/api/appflowdata` (new in 26.9)
+- `POST /api/policy/v1/state/resync` (previously `policy force-sync`)
+
+The three that had commands before are listed under [Removed commands](#removed-commands-breaking).
 
 **`ad set-groups-default-enabled` requires `--confirm`.** The spec calls it a "master reset" of the enable-all-groups default, so it is gated like the other destructive commands (68 in total).
 
@@ -369,11 +381,17 @@ Provenance: `GET /v3/api-docs` on `release-demos.idp02.elisity.io` on 2026-10-15
 
 ### Removed commands (breaking)
 
-This command is gone because the operation was removed from the CCC spec. Any script invoking one will now fail with `No such command`. Commands whose underlying *path* moved are not listed here — they still exist, and are under [Changed command signatures](#changed-command-signatures).
+Four commands are gone: one because the operation was removed from the CCC spec, three because their operations are internal to the platform and are now omitted from the CLI (see [Omitted operations](#omitted-operations)). Any script invoking one will now fail with `No such command`. Commands whose underlying *path* moved are not listed here — they still exist, and are under [Changed command signatures](#changed-command-signatures).
 
 **site-label-controller** (1)
 
 - `elisity policy is-site-label-in-use` — Is Site Label used
+
+**Omitted as platform-internal** (3)
+
+- `elisity devices attach` — `POST /api/identity-graph/v1/devices/attach`
+- `elisity devices attached` — `POST /api/identity-graph/v1/devices/attached`
+- `elisity policy force-sync` — `POST /api/policy/v1/state/resync`
 
 
 
@@ -411,9 +429,9 @@ A further 54 operations changed only in their response schema or status codes. I
 
 ### Added commands
 
-49 new commands, grouped by CLI group.
+44 new commands, grouped by CLI group.
 
-Where the operationId gave a name that was generic in its group (`devices list`, `devices usage`, `devices export`), carried a dedupe suffix (`validate-permissions-pre-creation-post`), or took a shipped name, the CLI sets the name per operation in `COMMAND_NAME_OVERRIDES` (`generate_commands.py`). In particular, 26.9's new `/v1/workloads/attach` and `/v1/workloads/attached` carry the operationIds `attach` / `attached`, which would have moved the existing `devices attach` / `devices attached` to `attach-post` / `attached-post`. Those device commands keep their names; the workload calls are `attach-workload` / `attach-workloads`.
+Where the operationId gave a name that was generic in its group (`devices list`, `devices usage`, `devices export`), carried a dedupe suffix (`validate-permissions-pre-creation-post`), or took a shipped name, the CLI sets the name per operation in `COMMAND_NAME_OVERRIDES` (`generate_commands.py`).
 
 #### `ad` (+8)
 
@@ -432,10 +450,8 @@ Where the operationId gave a name that was generic in its group (`devices list`,
 - `fetch-tanium-sensor-detail` — Look up one Tanium sensor by exact name
 - `probe-tanium-sensor-mapping` — Probe a draft sensor mapping
 
-#### `devices` (+18)
+#### `devices` (+16)
 
-- `attach-workload` — Attach a workload reported by a VEN, creating it if it does not exist
-- `attach-workloads` — Attach a batch of workloads reported by a VEN
 - `export-suppression-list` — Export entries as CSV
 - `list-azure-regions-existing` — List Azure regions available to an existing endpoint's subscriptions
 - `list-azure-regions-pre-creation` — List Azure regions available to a new endpoint's subscriptions (pre-creation)
@@ -452,12 +468,6 @@ Where the operationId gave a name that was generic in its group (`devices list`,
 - `validate-azure-permissions-pre-creation` — Validate Azure permissions for a new endpoint (pre-creation)
 - `validate-azure-region-permissions-existing` — Validate an existing endpoint's region filter against its subscriptions
 - `validate-azure-region-permissions-pre-creation` — Validate a new endpoint's region filter against its subscriptions (pre-creation)
-
-#### `flows` (+3)
-
-- `accept-app-flow-data` — `POST /flow/api/appflowdata`
-- `accept-flow-data` — `POST /flow/api/flowdata`
-- `accept-flows` — `POST /api/flows/v1/flows`
 
 #### `policy` (+11)
 
@@ -968,7 +978,7 @@ A further 118 operations changed only in their response schema or status codes. 
 - [AI Agent Operating Guide](docs/AGENTS.md) — How an AI agent should run the CLI on a human's behalf
 - [Glossary Appendix](docs/glossary.md) — UI term → CLI command reference (human-readable)
 - [Configuration Reference](docs/configuration.md) — Profiles, env vars, output formats, JMESPath
-- [Command Reference](docs/command-reference.md) — All 658 commands with descriptions
+- [Command Reference](docs/command-reference.md) — All 650 commands with descriptions
 
 ## License
 

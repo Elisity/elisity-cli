@@ -1405,66 +1405,6 @@ def cmd_get_device_aggregate(ctx, body_data, body_file, cmd_fmt, cmd_query):
         raise SystemExit(1)
     render(result, ctx.format, ctx.query)
 
-@group.command("attach-workloads")
-@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
-@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_attach_workloads(ctx, body_data, body_file, cmd_fmt, cmd_query):
-    """Attach a batch of workloads reported by a VEN"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/identity-graph/v1/workloads/attached"
-    params = None
-    body = None
-    if body_file:
-        import json as _json
-        with open(body_file) as f:
-            body = _json.load(f)
-    elif body_data:
-        import json as _json
-        body = _json.loads(body_data)
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, data=body, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
-@group.command("attach-workload")
-@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
-@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_attach_workload(ctx, body_data, body_file, cmd_fmt, cmd_query):
-    """Attach a workload reported by a VEN, creating it if it does not exist"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/identity-graph/v1/workloads/attach"
-    params = None
-    body = None
-    if body_file:
-        import json as _json
-        with open(body_file) as f:
-            body = _json.load(f)
-    elif body_data:
-        import json as _json
-        body = _json.loads(body_data)
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, data=body, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
 @group.command("get-configurations")
 @click.option("--status", "status", type=str, default=None, help="Filter configurations by status (CURRENT, UPCOMING, PAST)")
 @click.option("--name", "name", type=str, default=None, help="Filter configurations by name pattern (optional)")
@@ -2125,66 +2065,6 @@ def cmd_execute_bulk_refresh(ctx, deviceIds, sources, body_data, body_file, cmd_
         params["deviceIds"] = deviceIds
     if sources is not None:
         params["sources"] = sources
-    body = None
-    if body_file:
-        import json as _json
-        with open(body_file) as f:
-            body = _json.load(f)
-    elif body_data:
-        import json as _json
-        body = _json.loads(body_data)
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, data=body, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
-@group.command("attached")
-@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
-@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_attached(ctx, body_data, body_file, cmd_fmt, cmd_query):
-    """Attach devices by MAC or create new ones if not exists"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/identity-graph/v1/devices/attached"
-    params = None
-    body = None
-    if body_file:
-        import json as _json
-        with open(body_file) as f:
-            body = _json.load(f)
-    elif body_data:
-        import json as _json
-        body = _json.loads(body_data)
-    client = ctx.ensure_client()
-    try:
-        result = client.post(endpoint, data=body, params=params)
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
-    render(result, ctx.format, ctx.query)
-
-@group.command("attach")
-@click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
-@click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
-@click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
-@click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
-@pass_context
-def cmd_attach(ctx, body_data, body_file, cmd_fmt, cmd_query):
-    """Attach device by MAC or create new one if not exists"""
-    if cmd_fmt:
-        ctx.format = cmd_fmt
-    if cmd_query:
-        ctx.query = cmd_query
-    endpoint = f"/api/identity-graph/v1/devices/attach"
-    params = None
     body = None
     if body_file:
         import json as _json
