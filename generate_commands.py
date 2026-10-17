@@ -358,7 +358,7 @@ RESERVED_DESTS = frozenset({
     # signature
     "ctx", "cmd_fmt", "cmd_query", "body_data", "body_file",
     # body locals
-    "endpoint", "params", "body", "client", "result", "f", "_json", "e",
+    "endpoint", "params", "headers", "body", "client", "result", "f", "_json", "e",
 })
 RESERVED_FLAGS = frozenset({"--format", "-f", "--query", "-q", "--body", "--body-file"})
 CONFIRM_GUARD_DEST = "confirm"
@@ -457,7 +457,7 @@ def _unique_name(base: str, used: set, suffix: str = "") -> str:
 
 
 def resolve_parameter_names(method: str, path_params: list, query_params: list,
-                            path: str = "") -> tuple:
+                            path: str = "", header_params: list = ()) -> tuple:
     """Assign a collision-free Click flag + Python dest to every parameter.
 
     The wire name (what goes into the URL path or query string) is never
@@ -466,7 +466,9 @@ def resolve_parameter_names(method: str, path_params: list, query_params: list,
 
     The request-body flags are reserved unconditionally, not just when the
     operation has a body — a parameter named `body` on a body-less operation is
-    harmless to rename and keeps the rule simple. `path` is needed because the
+    harmless to rename and keeps the rule simple. Header parameters follow the
+    query rules (flag lower-cased, `--x-elisity-ve`) and come back in the second
+    list tagged `"in": "header"`. `path` is needed because the
     --confirm guard is now emitted for destructive non-DELETE operations too, so
     the identifier it occupies must be reserved for exactly the same set.
     """
@@ -496,6 +498,20 @@ def resolve_parameter_names(method: str, path_params: list, query_params: list,
             "required": preq,
             "desc": pdesc,
             "default": pdefault,
+            "in": "query",
+        })
+
+    for pname, ptype, preq, pdesc, pdefault in header_params:
+        base = python_safe(pname.lower().replace(".", "_").replace("-", "_"))
+        resolved_query.append({
+            "spec_name": pname,
+            "dest": _unique_name(base, used_dests),
+            "flag": _unique_name(f"--{pname.lower()}", used_flags, suffix="-param"),
+            "type": ptype,
+            "required": preq,
+            "desc": pdesc,
+            "default": pdefault,
+            "in": "header",
         })
 
     return resolved_path, resolved_query
@@ -629,9 +645,17 @@ def schema_base_type(schema: dict) -> str:
 
 
 def extract_params(op: dict) -> tuple:
-    """Extract path params, query params from operation."""
+    """Extract path, query and required header params from an operation.
+
+    Only REQUIRED headers become options: without them the call cannot be made
+    at all (CCC 26.9: X-Elisity-VE on the state-sync task calls, If-Match on
+    policy-group sibling-order). The optional ones are conditional-request
+    headers (If-Match / If-None-Match) on ~50 operations; exposing them is a
+    separate change that would touch most modules.
+    """
     path_params = []
     query_params = []
+    header_params = []
     for p in op.get("parameters", []):
         param_in = p.get("in", "")
         param_name = p.get("name", "")
@@ -649,7 +673,9 @@ def extract_params(op: dict) -> tuple:
             path_params.append((param_name, param_type, desc))
         elif param_in == "query":
             query_params.append((param_name, param_type, required, desc, schema.get("default")))
-    return path_params, query_params
+        elif param_in == "header" and required:
+            header_params.append((param_name, param_type, required, desc, schema.get("default")))
+    return path_params, query_params, header_params
 
 
 def merge_path_templates(path: str, path_params: list) -> list:
@@ -710,7 +736,7 @@ def produces_ndjson(op: dict) -> bool:
 
 def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     """Generate a single Click command function."""
-    path_params, query_params = extract_params(op)
+    path_params, query_params, header_params = extract_params(op)
     path_params = merge_path_templates(path, path_params)
     has_body = has_request_body(op)
     has_default_body = DEFAULT_BODY_KEY in op
@@ -722,7 +748,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
     func_name = python_safe(cmd_name)
 
     # Collision-free Click flags + Python identifiers. Wire names are unchanged.
-    rpath, rquery = resolve_parameter_names(method, path_params, query_params, path)
+    rpath, rquery = resolve_parameter_names(method, path_params, query_params, path,
+                                            header_params)
+    rheaders = [q for q in rquery if q["in"] == "header"]
     destructive = is_destructive_operation(method, path)
 
     lines = []
@@ -742,7 +770,9 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
         click_type = type_map.get(q["type"], "str")
         pdesc, pname = q["desc"], q["spec_name"]
         help_str = pdesc.replace('"', '\\"').replace('\n', ' ').replace('\r', '')[:80] if pdesc else pname
-        if q["flag"] != f"--{pname}":
+        if q["in"] == "header":
+            help_str = f"[header {pname}] {help_str}"[:80]
+        elif q["flag"] != f"--{pname}":
             # Flag renamed to avoid colliding with one the command already owns
             # (e.g. a spec param named `confirm` on a DELETE). The query string
             # still carries the spec name — say so in the help text.
@@ -806,13 +836,19 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
 
     # Build query params dict — keyed by the SPEC name, not the Python dest,
     # so a renamed identifier still sends the parameter the API expects.
-    if rquery:
+    if len(rquery) > len(rheaders):
         lines.append("    params = {}")
         for q in rquery:
-            lines.append(f'    if {q["dest"]} is not None:')
-            lines.append(f'        params["{q["spec_name"]}"] = {q["dest"]}')
+            if q["in"] == "query":
+                lines.append(f'    if {q["dest"]} is not None:')
+                lines.append(f'        params["{q["spec_name"]}"] = {q["dest"]}')
     else:
         lines.append("    params = None")
+    if rheaders:
+        lines.append("    headers = {}")
+        for q in rheaders:
+            lines.append(f'    if {q["dest"]} is not None:')
+            lines.append(f'        headers["{q["spec_name"]}"] = {q["dest"]}')
 
     # Handle request body
     if has_body:
@@ -855,6 +891,8 @@ def generate_command(method: str, path: str, op: dict, cmd_name: str) -> str:
         else:
             lines.append("        result = client.delete(endpoint, params=params)")
 
+    if rheaders:  # the client call just emitted ends in ")"
+        lines[-1] = lines[-1][:-1] + ", headers=headers)"
     lines.append("    except Exception as e:")
     lines.append('        click.echo(f"Error: {e}", err=True)')
     lines.append("        raise SystemExit(1)")

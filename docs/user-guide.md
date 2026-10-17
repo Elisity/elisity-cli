@@ -1428,10 +1428,10 @@ between request and response.
 #### Common 400 / 403 / 404 patterns
 
 **400 Bad Request** on a POST / PUT command almost always means a missing or wrong
-field in the request body. The CLI prints the response body to stderr; read it:
+field in the request body. The CLI appends the server's message to the error on stderr; read it:
 
 ```text
-HTTP 400: {"error":"Validation failed","field":"label","message":"label must not be blank"}
+Error: 400 Client Error: Bad Request for url: https://<tenant>/api/... — server message: label must not be blank
 ```
 
 Fix the body, retry.
@@ -2154,7 +2154,7 @@ A field guide to the messages you'll see, what they mean, and how to fix them.
 | `Error: 403 Forbidden` | Service account is authenticated but lacks the right scope | Talk to your CCC admin — the account needs the role for that endpoint. |
 | `Error: 404 Not Found` (endpoint) | Endpoint not enabled on this CCC version | Check version. Use `elisity <group> --help` to confirm the command exists. |
 | `Error: 404 Not Found` (resource) | The ID you passed doesn't exist | Re-run the corresponding `get-all-*` to confirm the ID. |
-| `Error: 400 Bad Request` | POST/PUT missing required body fields | Read the response body — it names the missing field. Check `--help` for `--body`. |
+| `Error: 400 Bad Request` | POST/PUT missing required body fields | Read the text after `— server message:`; it usually names the field. Check `--help` for `--body`. |
 | `Error: No such command 'X'` | Mis-typed command name | Run `elisity <group> --help` to list the actual commands. |
 | `Error: No such option: '--X'` | Mis-typed flag (e.g. `--data` instead of `--body`) | Run `elisity <group> <command> --help` for the actual flags. |
 | `Error: Missing argument 'ID'` | Command takes a positional UUID | Run the corresponding `get-all-*` first to pluck the ID. |

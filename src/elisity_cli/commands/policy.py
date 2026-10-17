@@ -741,12 +741,13 @@ def cmd_update_dynamic_policy_group(ctx, id, body_data, body_file, cmd_fmt, cmd_
 
 @group.command("reorder-siblings")
 @click.argument("id")
+@click.option("--if-match", "if_match", type=str, required=True, help="[header If-Match] If-Match")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
 @click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_reorder_siblings(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
+def cmd_reorder_siblings(ctx, id, if_match, body_data, body_file, cmd_fmt, cmd_query):
     """Reorder a dynamic policy group among its siblings"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -754,6 +755,9 @@ def cmd_reorder_siblings(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         ctx.query = cmd_query
     endpoint = f"/api/policy/v2/policy-groups/dynamic/{id}/sibling-order"
     params = None
+    headers = {}
+    if if_match is not None:
+        headers["If-Match"] = if_match
     body = None
     if body_file:
         import json as _json
@@ -764,7 +768,7 @@ def cmd_reorder_siblings(ctx, id, body_data, body_file, cmd_fmt, cmd_query):
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.put(endpoint, data=body, params=params)
+        result = client.put(endpoint, data=body, params=params, headers=headers)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)

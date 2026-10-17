@@ -95,12 +95,13 @@ def cmd_cancel_task(ctx, taskid, cmd_fmt, cmd_query, confirm):
 
 @group.command("release-execution-of-task")
 @click.argument("taskid")
+@click.option("--x-elisity-ve", "x_elisity_ve", type=str, required=True, help="[header X-Elisity-VE] VE node identifier")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
 @click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_release_execution_of_task(ctx, taskid, body_data, body_file, cmd_fmt, cmd_query):
+def cmd_release_execution_of_task(ctx, taskid, x_elisity_ve, body_data, body_file, cmd_fmt, cmd_query):
     """Release task"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -108,6 +109,9 @@ def cmd_release_execution_of_task(ctx, taskid, body_data, body_file, cmd_fmt, cm
         ctx.query = cmd_query
     endpoint = f"/api/state-sync/v1/tasks/{taskid}/release"
     params = None
+    headers = {}
+    if x_elisity_ve is not None:
+        headers["X-Elisity-VE"] = x_elisity_ve
     body = None
     if body_file:
         import json as _json
@@ -118,7 +122,7 @@ def cmd_release_execution_of_task(ctx, taskid, body_data, body_file, cmd_fmt, cm
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.put(endpoint, data=body, params=params)
+        result = client.put(endpoint, data=body, params=params, headers=headers)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -126,10 +130,11 @@ def cmd_release_execution_of_task(ctx, taskid, body_data, body_file, cmd_fmt, cm
 
 @group.command("ack-execution-of-task")
 @click.argument("taskid")
+@click.option("--x-elisity-ve", "x_elisity_ve", type=str, required=True, help="[header X-Elisity-VE] VE node identifier")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_ack_execution_of_task(ctx, taskid, cmd_fmt, cmd_query):
+def cmd_ack_execution_of_task(ctx, taskid, x_elisity_ve, cmd_fmt, cmd_query):
     """Acknowledge task without result payload"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -137,9 +142,12 @@ def cmd_ack_execution_of_task(ctx, taskid, cmd_fmt, cmd_query):
         ctx.query = cmd_query
     endpoint = f"/api/state-sync/v1/tasks/{taskid}/ack"
     params = None
+    headers = {}
+    if x_elisity_ve is not None:
+        headers["X-Elisity-VE"] = x_elisity_ve
     client = ctx.ensure_client()
     try:
-        result = client.put(endpoint, params=params)
+        result = client.put(endpoint, params=params, headers=headers)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -147,12 +155,13 @@ def cmd_ack_execution_of_task(ctx, taskid, cmd_fmt, cmd_query):
 
 @group.command("ack-execution-of-task-post")
 @click.argument("taskid")
+@click.option("--x-elisity-ve", "x_elisity_ve", type=str, required=True, help="[header X-Elisity-VE] VE node identifier")
 @click.option("--body", "body_data", type=str, default=None, help="Request body as JSON string")
 @click.option("--body-file", "body_file", type=click.Path(exists=True), default=None, help="Read request body from JSON file")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_ack_execution_of_task_post(ctx, taskid, body_data, body_file, cmd_fmt, cmd_query):
+def cmd_ack_execution_of_task_post(ctx, taskid, x_elisity_ve, body_data, body_file, cmd_fmt, cmd_query):
     """Acknowledge task with result payload"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -160,6 +169,9 @@ def cmd_ack_execution_of_task_post(ctx, taskid, body_data, body_file, cmd_fmt, c
         ctx.query = cmd_query
     endpoint = f"/api/state-sync/v1/tasks/{taskid}/ack"
     params = None
+    headers = {}
+    if x_elisity_ve is not None:
+        headers["X-Elisity-VE"] = x_elisity_ve
     body = None
     if body_file:
         import json as _json
@@ -170,7 +182,7 @@ def cmd_ack_execution_of_task_post(ctx, taskid, body_data, body_file, cmd_fmt, c
         body = _json.loads(body_data)
     client = ctx.ensure_client()
     try:
-        result = client.post(endpoint, data=body, params=params)
+        result = client.post(endpoint, data=body, params=params, headers=headers)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
@@ -492,10 +504,11 @@ def cmd_get_spec_group_id(ctx, groupid, cmd_fmt, cmd_query):
 
 @group.command("get-next-task-for-ve")
 @click.option("--connectorId", "connectorId", type=str, default=None, help="Optional connector identifier to filter tasks")
+@click.option("--x-elisity-ve", "x_elisity_ve", type=str, required=True, help="[header X-Elisity-VE] VE node identifier")
 @click.option("--format", "-f", "cmd_fmt", type=click.Choice(["json", "table", "yaml", "csv"]), default=None, help="Output format override", hidden=True)
 @click.option("--query", "-q", "cmd_query", type=str, default=None, help="JMESPath query override", hidden=True)
 @pass_context
-def cmd_get_next_task_for_ve(ctx, connectorId, cmd_fmt, cmd_query):
+def cmd_get_next_task_for_ve(ctx, connectorId, x_elisity_ve, cmd_fmt, cmd_query):
     """Poll next task for VE"""
     if cmd_fmt:
         ctx.format = cmd_fmt
@@ -505,9 +518,12 @@ def cmd_get_next_task_for_ve(ctx, connectorId, cmd_fmt, cmd_query):
     params = {}
     if connectorId is not None:
         params["connectorId"] = connectorId
+    headers = {}
+    if x_elisity_ve is not None:
+        headers["X-Elisity-VE"] = x_elisity_ve
     client = ctx.ensure_client()
     try:
-        result = client.get(endpoint, params=params)
+        result = client.get(endpoint, params=params, headers=headers)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         raise SystemExit(1)
