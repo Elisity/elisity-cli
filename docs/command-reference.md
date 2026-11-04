@@ -1,27 +1,28 @@
 # Elisity CLI -- Command Reference
 
-> The 490 REST commands below are auto-generated from the Elisity CCC OpenAPI
+> The 498 REST commands below are auto-generated from the Elisity CCC OpenAPI
 > specification. The `reporting` group (17 commands) uses the CCC reporting
 > (GraphQL) API and is not listed in this reference — see
 > [user-guide.md](user-guide.md) section 9 for the full reporting catalog.
 >
-> **514 commands** total: 490 auto-generated REST + 17 hand-coded GraphQL
+> **522 commands** total: 498 auto-generated REST + 17 hand-coded GraphQL
 > reporting + 7 CLI-native (auth + config). 11 groups total. (Excludes the 3
-> CLI-native `glossary` commands; see README for the full 517-command count.)
+> CLI-native `glossary` commands; see README for the full 525-command count.)
 
 ## Quick Find by Operation Type
 
-### List / Get operations (181 commands)
+### List / Get operations (184 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
 | ad | `get-activity-logs` | Query agent activity log |
 | ad | `get-agents-and-dcs` | Get list of AD Agents and DCs |
-| ad | `get-auth` | Get Entra authentication |
 | ad | `get-connector-by-id` | Get the connector |
 | ad | `get-connector-deletion-context` | Get connector deletion context |
 | ad | `get-connectors` | Get connectors |
 | ad | `get-distribution-zone-assignments` | Get distribution zone assignments per connector |
+| ad | `get-entra-instance` | Get one Entra instance |
+| ad | `get-entra-instance-statuses` | Per-instance Entra status |
 | ad | `get-entra-users` | Entra users |
 | ad | `get-groups-count` | Get groups count |
 | ad | `get-groups-default-enabled` | Get the 'enable all groups by default' toggle |
@@ -31,7 +32,8 @@
 | ad | `get-users-count-data` | Get users count |
 | ad | `get-users-logon-history` | Retrieve user logon history for a device |
 | ad | `get-users-view` | Get users view |
-| ad | `status` | Entra status |
+| ad | `list-entra-instances` | List all Entra instances |
+| ad | `status` | Aggregate Entra status (deprecated) |
 | connectors | `download-export-file` | Download generated XLSX for the export task |
 | connectors | `download-import-template` | Download sample XLSX import template for Custom Connector |
 | connectors | `get-custom-connector-devices` | Get devices from custom connector for given layer |
@@ -99,9 +101,7 @@
 | policy | `get-all-as-nd-json-get` | Get all policy group labels |
 | policy | `get-all-as-nd-json-get-2` | Get all policy groups |
 | policy | `get-all-matching-criteria` | Get match criteria labels and constant values |
-| policy | `get-all-policies-as-nd-json` | Get all policies |
 | policy | `get-all-policies-for-policy-group-as-nd-json` | Get all policies for given policy group (NDJSON) |
-| policy | `get-all-policies-for-policy-set-as-nd-json` | Search and filter Policies in given Policy Set |
 | policy | `get-all-policies-for-policy-view-as-nd-json` | Get all Policies for given Policy View |
 | policy | `get-all-policy-views-as-nd-json` | Get all policy views |
 | policy | `get-all-security-profiles-as-nd-json` | Get all security profiles |
@@ -116,6 +116,7 @@
 | policy | `get-current-multiple-policy-set-enablement-flag` | Get Security Profile Log enablement flag |
 | policy | `get-current-nested-policy-groups-flag` | Get current nested policy groups flag |
 | policy | `get-device-details` | Get device details by id |
+| policy | `get-distribution-zone-capacity-thresholds` | Get the configured Distribution Zone capacity alert thresholds (percent of limit) |
 | policy | `get-history-entries` | Search and filter policy history |
 | policy | `get-image` | Get an image |
 | policy | `get-import-status` | Get status of an ongoing or completed label import |
@@ -125,6 +126,7 @@
 | policy | `get-matching-criteria-inheritance` | Get matching criteria inheritance chain for a policy group |
 | policy | `get-nodes-assigned-to-policy-set` | Get virtual edge nodes assigned to Policy Set |
 | policy | `get-policies-count` | Get Policies count |
+| policy | `get-policies-for-policy-set` | Search and filter Policies in given Policy Set |
 | policy | `get-policies-for-security-profile` | Get policies for given security profile |
 | policy | `get-policy-by-id` | Get a policy by ID |
 | policy | `get-policy-group-by-id` | Get a policy group by ID |
@@ -149,6 +151,7 @@
 | policy | `read-policy-view` | Read a policy view by ID |
 | policy | `read-security-profile` | Read a security profile by ID |
 | policy | `search-templates` | Search and filter Policy Group Templates |
+| policy | `search-templates-v2` | Search and filter Policy Group Templates, policy groups as id and name |
 | system | `retrieve-snapshot` | Get snapshot by ID |
 | system | `retrieve-snapshot-evidence` | Get snapshot evidence package |
 | system | `retrieve-snapshot-markdown` | Get snapshot Markdown |
@@ -197,10 +200,11 @@
 | topology | `is-imbalanced` | Check if Virtual Edge Group is imbalanced |
 | topology | `list-workload-distribution-zones` | List Workload Distribution Zones known to Identity Graph |
 
-### Create operations (193 commands)
+### Create operations (196 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
+| ad | `create-entra-instance` | Create a new Entra instance |
 | ad | `export` | Generate AD Agents export as CSV |
 | ad | `export-groups` | Generate groups export as XLSX |
 | ad | `export-users` | Generate users export as CSV |
@@ -212,9 +216,8 @@
 | ad | `pull-logs` | Initiate a log pull from an AD Agent |
 | ad | `restart` | Restart the connector |
 | ad | `resync` | Resync the connector |
-| ad | `sync` | Sync Entra |
+| ad | `sync-entra-instance` | Register an Entra sync for an instance |
 | ad | `update-agent-description` | Save AD Agent description |
-| ad | `update-auth` | Update Entra authentication |
 | connectors | `add-endpoint` | Add an endpoint to a connector |
 | connectors | `async-export-devices` | Start async export of devices for custom connector as XLSX |
 | connectors | `cancel-current-export` | Cancel the current ongoing export (without exportId) |
@@ -261,7 +264,6 @@
 | devices | `list-azure-subscriptions-pre-creation` | List Azure subscriptions for a new endpoint (pre-creation) |
 | devices | `preview-azure-scope-existing` | Preview the scope of an existing endpoint (post-creation scope edit) |
 | devices | `preview-azure-scope-pre-creation` | Preview a scope before creating the connector |
-| devices | `refresh-devices-view` | Refresh DevicesView |
 | devices | `sync-connector` | Trigger immediate workload sync for all endpoints of a connector |
 | devices | `sync-endpoint` | Trigger immediate workload sync for a specific endpoint |
 | flows | `flows-export` | Generate flows export as CSV |
@@ -326,6 +328,7 @@
 | policy | `export-policies-to-csv` | Generate policies export as CSV |
 | policy | `export-policy-group-labels` | Export Policy Group Labels to CSV |
 | policy | `export-policy-group-to-csv` | Generate Policy Groups export as CSV |
+| policy | `export-policy-sets` | Generate a Policy Sets CSV export (parents followed by their replicas) |
 | policy | `export-security-profiles` | Generate a Security Profiles CSV export |
 | policy | `export-security-rules` | Generate a CSV export of one Security Profile's rules |
 | policy | `export-templates` | Export Policy Group Templates to CSV |
@@ -352,6 +355,7 @@
 | policy | `search-access-policy-security-profile-rules` | Search, filter and page the rules of one Access Policy Security Profile |
 | policy | `search-access-policy-security-profiles` | Search, filter and page Access Policy Security Profiles |
 | policy | `search-policies-for-policy-set` | Search and filter Policies in given Policy Set: filters in the JSON body |
+| policy | `search-policy-sets` | Search, filter and page Policy Sets; replicas are nested under their parent |
 | policy | `search-security-profiles` | Search, filter and page Security Profiles |
 | policy | `search-security-rules` | Search, filter and page the Security Rules of one Security Profile |
 | system | `create-snapshot-schedule` | Create snapshot schedule |
@@ -360,6 +364,8 @@
 | topology | `bulk-change-ven-group` | Bulk change Virtual Edge Group for multiple VENs |
 | topology | `bulk-create-site-labels` | Bulk create site labels |
 | topology | `bulk-recommission-ve-ns` | Bulk recommission Virtual Edge Nodes |
+| topology | `check-candidate-credentials` | Test a candidate credential before the VEN exists |
+| topology | `check-ven-credentials` | Test a VEN's credentials against its vendor |
 | topology | `create-cloud-controller` | Create a new cloud controller |
 | topology | `create-distribution-zone` | Create Distribution Zones |
 | topology | `create-flow-exporter` | Create a flow exporter |
@@ -395,18 +401,20 @@
 | topology | `virtual-edge-bulk-upload` | Bulk upload Virtual Edges from XLSX file |
 | topology | `virtual-edge-node-bulk-upload` | Bulk upload Virtual Edge Nodes from XLSX file |
 
-### Update operations (68 commands)
+### Update operations (70 commands)
 
 | Group | Command | Description |
 |-------|---------|-------------|
 | ad | `set-distribution-zones` | Set distribution zones for a connector |
 | ad | `set-groups-default-enabled` | Set the 'enable all groups by default' toggle (master reset) |
+| ad | `update-entra-instance` | Update an existing Entra instance |
 | connectors | `update` | Update a single inventory record |
 | connectors | `update-connector` | Update connector configuration by ID |
 | connectors | `update-connector-configuration` | Update connector configuration by ID |
 | connectors | `update-endpoint` | Update an endpoint |
 | devices | `add-device-unique-attribute-value` | Add device attribute unique value |
 | devices | `bulk-update-devices` | Update devices by ID |
+| devices | `bulk-update-workloads` | Bulk update workload STATIC attributes |
 | devices | `update` | Update suppression entry |
 | devices | `update-configuration` | Update time-based configuration |
 | devices | `update-settings` | Update offline purge settings (global and policy groups) |
@@ -472,7 +480,7 @@
 
 | Group | Command | Description |
 |-------|---------|-------------|
-| ad | `delete-auth` | Delete Entra authentication and all related data |
+| ad | `delete-entra-instance` | Delete a specific Entra instance and all its data |
 | ad | `unregister-connector` | Unregister the connector |
 | connectors | `delete` | Delete a single inventory record |
 | connectors | `delete-connector` | Delete connector configuration by ID |
@@ -553,11 +561,12 @@ Profile and configuration management.
 
 ## API Command Groups
 
-### ad (36 commands)
+### ad (39 commands)
 
 | Command | Description |
 |---------|-------------|
-| `delete-auth` | Delete Entra authentication and all related data |
+| `create-entra-instance` | Create a new Entra instance |
+| `delete-entra-instance` | Delete a specific Entra instance and all its data |
 | `export` | Generate AD Agents export as CSV |
 | `export-groups` | Generate groups export as XLSX |
 | `export-users` | Generate users export as CSV |
@@ -565,11 +574,12 @@ Profile and configuration management.
 | `export-users-post` | Generate Entra users export as CSV |
 | `get-activity-logs` | Query agent activity log |
 | `get-agents-and-dcs` | Get list of AD Agents and DCs |
-| `get-auth` | Get Entra authentication |
 | `get-connector-by-id` | Get the connector |
 | `get-connector-deletion-context` | Get connector deletion context |
 | `get-connectors` | Get connectors |
 | `get-distribution-zone-assignments` | Get distribution zone assignments per connector |
+| `get-entra-instance` | Get one Entra instance |
+| `get-entra-instance-statuses` | Per-instance Entra status |
 | `get-entra-users` | Entra users |
 | `get-group-devices` | Get devices that are direct members of a group |
 | `get-group-users` | Get users that are direct members of a group |
@@ -582,17 +592,18 @@ Profile and configuration management.
 | `get-users-count-data` | Get users count |
 | `get-users-logon-history` | Retrieve user logon history for a device |
 | `get-users-view` | Get users view |
+| `list-entra-instances` | List all Entra instances |
 | `pull-logs` | Initiate a log pull from an AD Agent |
 | `restart` | Restart the connector |
 | `resync` | Resync the connector |
 | `set-distribution-zones` | Set distribution zones for a connector |
 | `set-groups-default-enabled` | Set the 'enable all groups by default' toggle (master reset) |
 | `set-groups-enabled` | Enable or disable one or many groups |
-| `status` | Entra status |
-| `sync` | Sync Entra |
+| `status` | Aggregate Entra status (deprecated) |
+| `sync-entra-instance` | Register an Entra sync for an instance |
 | `unregister-connector` | Unregister the connector |
 | `update-agent-description` | Save AD Agent description |
-| `update-auth` | Update Entra authentication |
+| `update-entra-instance` | Update an existing Entra instance |
 
 ### connectors (35 commands)
 
@@ -642,6 +653,7 @@ Profile and configuration management.
 | `bulk-create-devices` | Create new devices |
 | `bulk-create-devices-from-file` | Create new devices from XLSX file |
 | `bulk-update-devices` | Update devices by ID |
+| `bulk-update-workloads` | Bulk update workload STATIC attributes |
 | `create` | Create a new suppression entry |
 | `create-configuration` | Create new time-based configuration |
 | `create-device` | Create a new device |
@@ -698,7 +710,6 @@ Profile and configuration management.
 | `read-device` | Get device by ID |
 | `read-history-for-device` | Read device event history by device ID |
 | `read-static-layer-specification` | Read static layer specification |
-| `refresh-devices-view` | Refresh DevicesView |
 | `search-by-name` | Search time-based configurations by name |
 | `search-device` | Search device by MAC |
 | `search-suppression-list` | Get all entries (paged, searchable and filterable) |
@@ -768,7 +779,7 @@ Profile and configuration management.
 | `update-suggestion` | Update Suggestion |
 | `update-suggestion-put` | Update Network Policy Suggestion |
 
-### policy (174 commands)
+### policy (177 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -831,6 +842,7 @@ Profile and configuration management.
 | `export-policies-to-csv` | Generate policies export as CSV |
 | `export-policy-group-labels` | Export Policy Group Labels to CSV |
 | `export-policy-group-to-csv` | Generate Policy Groups export as CSV |
+| `export-policy-sets` | Generate a Policy Sets CSV export (parents followed by their replicas) |
 | `export-security-profiles` | Generate a Security Profiles CSV export |
 | `export-security-rules` | Generate a CSV export of one Security Profile's rules |
 | `export-templates` | Export Policy Group Templates to CSV |
@@ -841,9 +853,7 @@ Profile and configuration management.
 | `get-all-as-nd-json-get` | Get all policy group labels |
 | `get-all-as-nd-json-get-2` | Get all policy groups |
 | `get-all-matching-criteria` | Get match criteria labels and constant values |
-| `get-all-policies-as-nd-json` | Get all policies |
 | `get-all-policies-for-policy-group-as-nd-json` | Get all policies for given policy group (NDJSON) |
-| `get-all-policies-for-policy-set-as-nd-json` | Search and filter Policies in given Policy Set |
 | `get-all-policies-for-policy-view-as-nd-json` | Get all Policies for given Policy View |
 | `get-all-policy-views-as-nd-json` | Get all policy views |
 | `get-all-security-profiles-as-nd-json` | Get all security profiles |
@@ -859,6 +869,7 @@ Profile and configuration management.
 | `get-current-nested-policy-groups-flag` | Get current nested policy groups flag |
 | `get-device-details` | Get device details by id |
 | `get-devices-current-pg-and-new-pg-after-evaluation` | Get current and expected policy groups after the devices will be unlocked |
+| `get-distribution-zone-capacity-thresholds` | Get the configured Distribution Zone capacity alert thresholds (percent of limit) |
 | `get-history-entries` | Search and filter policy history |
 | `get-image` | Get an image |
 | `get-import-status` | Get status of an ongoing or completed label import |
@@ -873,6 +884,7 @@ Profile and configuration management.
 | `get-online-devices-for-distribution-zones` | Get count of online devices for distribution zones |
 | `get-online-devices-for-site-labels` | Get count of online devices for site labels |
 | `get-policies-count` | Get Policies count |
+| `get-policies-for-policy-set` | Search and filter Policies in given Policy Set |
 | `get-policies-for-security-profile` | Get policies for given security profile |
 | `get-policy-by-id` | Get a policy by ID |
 | `get-policy-group-by-id` | Get a policy group by ID |
@@ -920,9 +932,11 @@ Profile and configuration management.
 | `search-access-policy-security-profile-rules` | Search, filter and page the rules of one Access Policy Security Profile |
 | `search-access-policy-security-profiles` | Search, filter and page Access Policy Security Profiles |
 | `search-policies-for-policy-set` | Search and filter Policies in given Policy Set: filters in the JSON body |
+| `search-policy-sets` | Search, filter and page Policy Sets; replicas are nested under their parent |
 | `search-security-profiles` | Search, filter and page Security Profiles |
 | `search-security-rules` | Search, filter and page the Security Rules of one Security Profile |
 | `search-templates` | Search and filter Policy Group Templates |
+| `search-templates-v2` | Search and filter Policy Group Templates, policy groups as id and name |
 | `toggle-lock-bulk` | Bulk lock or unlock devices by serviceDeviceIds |
 | `unlock-device` | Unlock Device by serviceDeviceIds |
 | `unlock-policy-group` | Unlock policy group |
@@ -964,7 +978,7 @@ Profile and configuration management.
 | `search-snapshots` | Search snapshots |
 | `update-snapshot-schedule` | Update snapshot schedule |
 
-### topology (114 commands)
+### topology (116 commands)
 
 | Command | Description |
 |---------|-------------|
@@ -974,6 +988,8 @@ Profile and configuration management.
 | `change-active-ve` | Change Active Virtual Edge for a Virtual Edge Node (VEN) |
 | `change-ven-group` | Change Virtual Edge Group for a Virtual Edge Node (VEN) |
 | `change-virtual-edge-group` | Change virtual edge group for existing virtual edge |
+| `check-candidate-credentials` | Test a candidate credential before the VEN exists |
+| `check-ven-credentials` | Test a VEN's credentials against its vendor |
 | `create-cloud-controller` | Create a new cloud controller |
 | `create-distribution-zone` | Create Distribution Zones |
 | `create-flow-exporter` | Create a flow exporter |

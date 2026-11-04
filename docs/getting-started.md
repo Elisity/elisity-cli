@@ -1,6 +1,6 @@
 # Getting Started with the Elisity CCC CLI
 
-The Elisity CCC CLI is a command-line interface to the Elisity Cloud Control Center API. It provides 517 commands across 12 command groups covering topology, policy, devices, connectors, AD/Entra integration, traffic flows, insights, reporting, and system operations. This release matches CCC 26.9.
+The Elisity CCC CLI is a command-line interface to the Elisity Cloud Control Center API. It provides 525 commands across 12 command groups covering topology, policy, devices, connectors, AD/Entra integration, traffic flows, insights, reporting, and system operations. This release matches CCC 26.10.
 
 This guide walks you through installation, configuration, authentication, and your first commands.
 
@@ -18,7 +18,7 @@ This guide walks you through installation, configuration, authentication, and yo
 
 The CLI ships as a wheel attached to each release at
 https://github.com/Elisity/elisity-cli/releases. The release version matches the CCC
-release the commands were built for (for example `26.9.0` for CCC 26.9).
+release the commands were built for (for example `26.10.0` for CCC 26.10).
 
 ### 1. Download and check the files
 
@@ -77,7 +77,7 @@ Activate the venv again in every new shell before you run `elisity`.
 elisity --version
 ```
 
-It prints the installed version, for example `elisity, version 26.9.0`.
+It prints the installed version, for example `elisity, version 26.10.0`.
 
 ### Upgrade
 
@@ -128,15 +128,18 @@ Named profiles are stored in `~/.elisity/config.yaml` and persist across session
 ```bash
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET'
+  --client-id YOUR_CLIENT_ID
 ```
 
-Output:
+The CLI asks for the client secret and does not echo what you type:
 
 ```
+Client secret:
 Profile 'prod' saved to ~/.elisity/config.yaml
 ```
+
+If `CCC_CLIENT_SECRET` is set, the CLI uses it instead of asking. Avoid
+`--client-secret`: a secret on the command line stays in your shell history.
 
 The first profile you create becomes the active profile automatically. To switch between profiles:
 
@@ -297,7 +300,6 @@ You can set a default format per profile:
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
   --client-id YOUR_ID \
-  --client-secret 'YOUR_SECRET' \
   --default-format table
 ```
 
@@ -364,10 +366,10 @@ The CLI is organized into 12 command groups:
 
 | Group | Description | Commands |
 |-------|-------------|----------|
-| `policy` | Policy sets, policies, policy groups, security profiles, labels, access policy (LPA) | 174 |
-| `topology` | Sites, distribution zones, VE groups, VEs, VENs, flow exporters | 114 |
+| `policy` | Policy sets, policies, policy groups, security profiles, labels, access policy (LPA) | 177 |
+| `topology` | Sites, distribution zones, VE groups, VEs, VENs, flow exporters | 116 |
 | `devices` | Device identity, enrichment, CRUD, bulk operations, cloud workloads (AWS, Azure) | 73 |
-| `ad` | Active Directory and Entra ID integration | 36 |
+| `ad` | Active Directory and Entra ID integration | 39 |
 | `connectors` | Connector management and configuration, Tanium sensor mappings | 35 |
 | `insights` | Policy suggestions, dynamic/network group recommendations | 31 |
 | `system` | Report snapshots and snapshot schedules | 12 |

@@ -1,14 +1,14 @@
 # Elisity CCC CLI
 
-Command-line interface to the Elisity Cloud Control Center (CCC) API. Covers 490 REST endpoints from the OpenAPI spec, plus 17 hand-coded GraphQL commands for the CCC reporting API (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors), plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
+Command-line interface to the Elisity Cloud Control Center (CCC) API. Covers 498 REST endpoints from the OpenAPI spec, plus 17 hand-coded GraphQL commands for the CCC reporting API (Zero Trust scores, threat vectors, per-site KPIs, traffic vectors), plus a 3-command CLI-native `glossary` group that maps Elisity UI terminology to CLI commands.
 
-This release matches **CCC 26.9**. What changed between releases is in [CHANGELOG.md](CHANGELOG.md).
+This release matches **CCC 26.10**. What changed between releases is in [CHANGELOG.md](CHANGELOG.md).
 
 > **For AI agents:** see [docs/AGENTS.md](docs/AGENTS.md) for a UI-term → CLI-command operating guide. The `elisity glossary` group is the runtime lookup surface.
 
 ## Features
 
-- **517 commands** total (490 auto-generated from the CCC OpenAPI spec + 17 hand-coded GraphQL reporting commands + 7 CLI-native auth/config + 3 CLI-native glossary commands)
+- **525 commands** total (498 auto-generated from the CCC OpenAPI spec + 17 hand-coded GraphQL reporting commands + 7 CLI-native auth/config + 3 CLI-native glossary commands)
 - **Multi-profile configuration** — manage multiple CCC environments (prod, staging, lab)
 - **4 output formats** — JSON (default), table, YAML, CSV
 - **JMESPath filtering** — reshape and filter output with `-q` expressions
@@ -16,7 +16,7 @@ This release matches **CCC 26.9**. What changed between releases is in [CHANGELO
 - **NDJSON support** — transparent parsing of newline-delimited JSON endpoints
 - **GraphQL reporting** — the `reporting` group wraps the CCC dashboard's reporting queries (Zero Trust scores, site KPIs, threat vectors, traffic-by-PG/IP)
 - **UI-term glossary** — `glossary` group answers "what command runs the Zero Trust Score tile?" without guesswork
-- **Destructive-op safety** — `--confirm` required for all 47 destructive commands: every DELETE, plus PUT decommission, Insights reset/recreate, and the AD groups "master reset"
+- **Destructive-op safety** — `--confirm` required for all 48 destructive commands: every DELETE, plus PUT decommission, Insights reset/recreate, the AD groups "master reset" and the Entra ID instance update
 - **Retry with backoff** — automatic retry on connection errors and timeouts
 
 ## Install
@@ -50,11 +50,10 @@ Use your CCC URL, the address you open the CCC UI at, and the API client ID and 
 for your tenant (ask your CCC administrator or Elisity Support).
 
 ```bash
-# Configure
+# Configure: the CLI asks for the client secret and does not echo it
 elisity config set-profile myenv \
   --base-url https://ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET'
+  --client-id YOUR_CLIENT_ID
 
 # Verify
 elisity auth test
@@ -73,7 +72,8 @@ elisity auth test
 ```
 
 The profile, including the client secret, is stored in plain text in
-`~/.elisity/config.yaml`. See [Configuration](docs/configuration.md) for how to protect it.
+`~/.elisity/config.yaml`. On Linux and macOS the CLI keeps that file readable by your
+user only. See [Configuration](docs/configuration.md#security-considerations) for details.
 
 > **For agents and humans new to Elisity:** read **[docs/user-guide.md](docs/user-guide.md)** before doing real work. It is the workflow-oriented guide and has worked examples for the most common queries (devices per site, VEN inventory, posture score, flow search, scripting). The README below is reference material; the user guide is the tutorial. AI agents should additionally read [docs/AGENTS.md](docs/AGENTS.md).
 
@@ -120,10 +120,10 @@ curl -H "Authorization: Bearer $TOKEN" https://ccc.example.com/api/topology/v2/s
 
 | Group | Commands | Description |
 |-------|----------|-------------|
-| `topology` | 114 | Sites, distribution zones, workload distribution zones, VE groups, VEs, VENs, VE/VEN metrics summaries, flow exporters, cloud controllers, interface settings |
-| `policy` | 174 | Policy sets, policies, policy groups, security profiles + access policy security profiles (search/export), policy reviews, site labels, label management, access policy (LPA), custom applications, vendors |
+| `topology` | 116 | Sites, distribution zones, workload distribution zones, VE groups, VEs, VENs, VE/VEN metrics summaries, flow exporters, cloud controllers, interface settings |
+| `policy` | 177 | Policy sets, policies, policy groups, security profiles + access policy security profiles (search/export), policy reviews, site labels, label management, access policy (LPA), custom applications, vendors |
 | `devices` | 73 | Device CRUD, bulk operations, enrichment, suppression list, custom attributes, cloud workloads + AWS and Azure discovery |
-| `ad` | 36 | Active Directory / Entra ID connectors, agents, agent logs, AD group enablement |
+| `ad` | 39 | Active Directory / Entra ID connectors, Entra ID instances, agents, agent logs, AD group enablement |
 | `connectors` | 35 | Connector configuration, custom connector devices/inventory, import/export, connectivity, Tanium sensor mappings |
 | `insights` | 31 | Policy suggestions, dynamic/network group recommendations |
 | `flows` | 15 | Traffic flow search, device state, noise definitions, device heatmap |
@@ -173,9 +173,9 @@ elisity topology get-all-sites -q '[0:3]'
 ## Multi-Environment Profiles
 
 ```bash
-# Create profiles for different environments
-elisity config set-profile prod --base-url https://prod-ccc.example.com --client-id ID --client-secret SECRET
-elisity config set-profile lab  --base-url https://lab-ccc.example.com  --client-id ID --client-secret SECRET
+# Create profiles for different environments (each asks for its client secret)
+elisity config set-profile prod --base-url https://prod-ccc.example.com --client-id ID
+elisity config set-profile lab  --base-url https://lab-ccc.example.com  --client-id ID
 
 # Switch between them
 elisity config use-profile prod
@@ -215,7 +215,7 @@ Installed automatically with the wheel:
 - [AI Agent Operating Guide](docs/AGENTS.md) — How an AI agent should run the CLI on a human's behalf
 - [Glossary Appendix](docs/glossary.md) — UI term → CLI command reference (human-readable)
 - [Configuration Reference](docs/configuration.md) — Profiles, env vars, output formats, JMESPath
-- [Command Reference](docs/command-reference.md) — All 517 commands with descriptions
+- [Command Reference](docs/command-reference.md) — All 525 commands with descriptions
 - [Changelog](CHANGELOG.md) — What changed in each release; read it before you upgrade
 
 ## Support

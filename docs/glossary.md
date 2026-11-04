@@ -6,7 +6,7 @@ say in the UI, the official context, and the CLI commands that implement the
 concept.
 
 The entries here follow the glossary data that ships with the CLI and reflect
-the 517-command CLI surface. Synonyms are derived from the Elisity product
+the 525-command CLI surface. Synonyms are derived from the Elisity product
 glossary — if a term you expect is missing, run
 `elisity glossary list` to see the full set.
 
@@ -34,8 +34,8 @@ elisity reporting get-policy-count --monitor-mode MONITOR_ONLY
 # Traffic that hit Simulation policies over the last 24h
 elisity reporting get-traffic-count --policy-status SIMULATION
 
-# Filter the full policy stream to only Simulation policies
-elisity policy get-all-policies-as-nd-json -q '[?monitorMode==`MONITOR_ONLY`]'
+# The Simulation policies of one policy set
+elisity policy search-policies-for-policy-set <POLICY_SET_ID> --body '{"size":250}' -q 'content[?monitorMode==`MONITOR_ONLY`]'
 ```
 
 ### Active
@@ -54,8 +54,8 @@ elisity reporting get-policy-count --monitor-mode MONITOR_AND_ENFORCE
 # Traffic that hit Active policies over the last 24h
 elisity reporting get-traffic-count --policy-status ACTIVE
 
-# Filter the full policy stream to only Active policies
-elisity policy get-all-policies-as-nd-json -q '[?monitorMode==`MONITOR_AND_ENFORCE`]'
+# The Active policies of one policy set
+elisity policy search-policies-for-policy-set <POLICY_SET_ID> --body '{"size":250}' -q 'content[?monitorMode==`MONITOR_AND_ENFORCE`]'
 
 # Activate a simulation policy: set monitorMode to MONITOR_AND_ENFORCE
 # (read --help first — requires --body; send the policy's other fields back unchanged)
@@ -75,8 +75,8 @@ Enum: `MONITOR_EXTERNAL`.
 # Count policies in Independent Control mode
 elisity reporting get-policy-count --monitor-mode MONITOR_EXTERNAL
 
-# Filter the policy stream to Independent Control policies
-elisity policy get-all-policies-as-nd-json -q '[?monitorMode==`MONITOR_EXTERNAL`]'
+# The Independent Control policies of one policy set
+elisity policy search-policies-for-policy-set <POLICY_SET_ID> --body '{"size":250}' -q 'content[?monitorMode==`MONITOR_EXTERNAL`]'
 ```
 
 ### Policy Group
@@ -135,8 +135,8 @@ elisity policy get-policies-for-security-profile <SECURITY_PROFILE_ID>
 # Get the full policy matrix as JSON
 elisity policy get-matrix
 
-# Stream every policy in matrix form
-elisity policy get-all-policies-as-nd-json
+# The policies of one policy set (a page; the policies are in `content`)
+elisity policy search-policies-for-policy-set <POLICY_SET_ID> --body '{"size":250}'
 ```
 
 ### Unassigned (Policy Group)
@@ -235,11 +235,18 @@ elisity reporting get-zero-trust-metrics
 elisity -f table \
   -q '[].{pg: policyGroupName, pgId: policyGroupId, devCov: policyDeploymentMetrics.deviceCoverage}' \
   reporting get-zero-trust-metrics
-elisity -f table \
-  -q '[?srcId==`PG_ID` || dstId==`PG_ID`].{name: name, mode: monitorMode, disabled: disabled}' \
-  policy get-all-policies-as-nd-json
-#   no rows = no policy | all MONITOR_ONLY = simulation | any
-#   MONITOR_AND_ENFORCE = active but uncovered
+#    Policies live in policy sets: repeat per POLICY_SET_ID
+#    (elisity policy get-all-as-nd-json -q '[].id'). CCC filters by group,
+#    once as source and once as destination.
+elisity -f json policy search-policies-for-policy-set <POLICY_SET_ID> \
+  --body '{"srcPolicyGroupIds":["PG_ID"],"size":250}' \
+  -q '{total: totalElements, last: last, policies: content[].{name: name, mode: monitorMode, status: status}}'
+elisity -f json policy search-policies-for-policy-set <POLICY_SET_ID> \
+  --body '{"dstPolicyGroupIds":["PG_ID"],"size":250}' \
+  -q '{total: totalElements, last: last, policies: content[].{name: name, mode: monitorMode, status: status}}'
+#   Each answer is one page: while `last` is false, repeat with "page":1, 2, ...
+#   Over both calls, every page and every policy set: `total` 0 = no policy |
+#   all MONITOR_ONLY = simulation | any MONITOR_AND_ENFORCE = active but uncovered
 ```
 
 > **Removed in CCC 26.7.** `policy get-enforcement-score`,
@@ -295,6 +302,11 @@ elisity reporting get-virtual-edge-nodes-count
 
 # Export every VEN
 elisity topology export-virtual-edge-nodes
+
+# Test a VEN's stored credentials against its vendor (an online Virtual Edge
+# runs the check; nothing is saved). check-candidate-credentials tests one
+# before the VEN exists.
+elisity topology check-ven-credentials <VEN_ID>
 ```
 
 ### Visibility-Only Virtual Edge Node
@@ -340,6 +352,9 @@ elisity topology export-distribution-zones
 
 # Online devices grouped by DZ
 elisity policy get-online-devices-for-distribution-zones
+
+# Capacity alert thresholds, in percent of a DZ's limit
+elisity policy get-distribution-zone-capacity-thresholds
 ```
 
 ### Workload Distribution Zone
@@ -453,6 +468,10 @@ elisity devices get-workload-aggregate
 
 # Get a single workload by ID
 elisity devices get-workload-details <WORKLOAD_ID>
+
+# Set the same attributes on many workloads (state-changing — get human
+# approval first; omitted fields stay unchanged, label replaces the labels)
+elisity devices bulk-update-workloads --body '{"workloadIds": ["<WORKLOAD_ID>"], "riskLevel": "<RISK_LEVEL>"}'
 ```
 
 ### Workload Discovery
@@ -658,6 +677,40 @@ elisity ad set-groups-enabled --body '{"ids": [<GROUP_ID>], "enabled": true}'
 > `ad set-groups-default-enabled` changes the default for new groups. It is
 > destructive and requires `--confirm`.
 
+### Entra ID Instance
+
+> "entra instance", "entra tenant", "azure ad tenant", "multiple entra tenants",
+> "entra id connection", "entra sync"
+
+**Context:** One connected Microsoft Entra ID tenant, with its own name, tenant
+ID and client credentials. CCC 26.10 connects more than one, and syncs and
+reports status per instance; it replaces the single tenant-wide Entra
+configuration.
+
+**CLI recipes:**
+
+```bash
+# List the connected Entra ID instances
+elisity ad list-entra-instances
+
+# Sync status of every instance
+elisity ad get-entra-instance-statuses
+
+# One instance
+elisity ad get-entra-instance <INSTANCE_ID>
+
+# Connect another Entra ID tenant (state-changing — get human approval first;
+# on update-entra-instance, leave clientSecret out to keep the stored secret)
+elisity ad create-entra-instance --body '{"name": "<NAME>", "tenantId": "<TENANT_ID>", "clientId": "<CLIENT_ID>", "clientSecret": "<CLIENT_SECRET>"}'
+
+# Sync one instance now (state-changing — get human approval first)
+elisity ad sync-entra-instance <INSTANCE_ID>
+```
+
+> `ad delete-entra-instance` deletes the instance and its data, and
+> `ad update-entra-instance` deletes its data when the update changes `tenantId`.
+> Both are destructive and require `--confirm`.
+
 ---
 
 ## Terminology-only (no direct CLI surface)
@@ -690,7 +743,7 @@ the CLI play a similar role: see [AGENTS.md](AGENTS.md).
 
 ## Where this data comes from
 
-The 28 canonical terms originate from
+The 29 canonical terms originate from
 the Elisity product glossary maintained alongside the product.
 The glossary ships with the CLI, together with the synonym → CLI command
 translation, so `elisity glossary list` shows every term for the version you

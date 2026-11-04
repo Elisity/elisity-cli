@@ -129,9 +129,10 @@ Destructive is decided by the API path, not the HTTP verb: every `DELETE`, plus 
 verb whose path names a destructive action (for example `delete`, `force-delete`,
 `force`, `purge`, `decommission`, `reset-to-default`, `recreate`). So the PUT
 `topology decommission-virtual-edge-node` is gated too, and so are the Insights
-reset/recreate commands. One operation is gated by name rather than path:
-`ad set-groups-default-enabled`, which CCC calls a "master reset". 47 commands in
-total.
+reset/recreate commands. Two operations are gated by name rather than path:
+`ad set-groups-default-enabled`, which CCC calls a "master reset", and
+`ad update-entra-instance`, because a new `tenantId` on an instance deletes its data.
+48 commands in total.
 
 `--confirm` is not the same thing as "safe to run unattended". Plenty of commands
 change live tenant state without destroying anything — `create-*`, `update-*`,
@@ -350,7 +351,7 @@ When in doubt, list the group:
 elisity topology --help
 ```
 
-That prints all 114 topology commands with a one-line description for each. The
+That prints all 116 topology commands with a one-line description for each. The
 output is paginated by your terminal — pipe to `less` for browsing:
 
 ```bash
@@ -1024,24 +1025,21 @@ prod, staging, and a lab. The CLI supports this directly through profiles and a
 
 #### Profile switching (prod / staging / lab)
 
-Define a profile per tenant:
+Define a profile per tenant. Each command asks for that tenant's client secret:
 
 ```bash
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET'
+  --client-id YOUR_CLIENT_ID
 
 elisity config set-profile staging \
   --base-url https://staging-ccc.example.com \
   --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET' \
   --timeout 60
 
 elisity config set-profile lab \
   --base-url https://lab-ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET'
+  --client-id YOUR_CLIENT_ID
 ```
 
 Verify with `config list-profiles`:
@@ -1824,7 +1822,6 @@ on a profile. Override per-command when you need to pipe:
 elisity config set-profile lab \
   --base-url https://lab-ccc.example.com \
   --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET' \
   --default-format table
 ```
 
@@ -2260,7 +2257,7 @@ Usage: elisity [OPTIONS] COMMAND [ARGS]...
   Elisity CCC CLI — command-line interface to the Cloud Control Center API.
 
   Manages topology, policies, devices, connectors, AD/Entra integration,
-  traffic flows, and system operations — 517 commands across 12 groups (9 API-
+  traffic flows, and system operations — 525 commands across 12 groups (9 API-
   backed + 3 CLI-native: auth, config, glossary).
 
   Configuration:   Set CCC_BASE_URL, CCC_CLIENT_ID, CCC_CLIENT_SECRET env
@@ -2348,8 +2345,7 @@ name and corrected values:
 ```bash
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET'
+  --client-id YOUR_CLIENT_ID
 ```
 
 That replaces the whole profile: `timeout` and `default_format` go back to their
@@ -2377,11 +2373,8 @@ The on-disk config file:
 ```
 
 The directory is created on first `config set-profile`. The file holds secrets in
-plain text. Set restrictive permissions:
-
-```bash
-chmod 600 ~/.elisity/config.yaml
-```
+plain text, so on Linux and macOS the CLI keeps the directory at `700` and the file
+at `600`, readable by your user only, and tightens both on every write.
 
 For multi-user systems or CI runners, prefer environment variables backed by a
 secrets manager (GitHub Secrets, Vault, AWS Secrets Manager). Do not check
@@ -2461,7 +2454,6 @@ export CCC_TIMEOUT=120
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
   --client-id YOUR_CLIENT_ID \
-  --client-secret 'YOUR_CLIENT_SECRET' \
   --timeout 120
 ```
 
