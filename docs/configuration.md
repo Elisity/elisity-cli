@@ -12,13 +12,13 @@ output formatting, and query filtering.
 In the examples below, use your CCC URL, the address you open the CCC UI at, in
 place of the `example.com` hosts.
 
-**Interactive use** -- create a named profile:
+**Interactive use** -- create a named profile. The CLI asks for the client secret and
+does not echo it:
 
 ```bash
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret YOUR_CLIENT_SECRET
+  --client-id YOUR_CLIENT_ID
 ```
 
 **CI/CD and scripting** -- export environment variables (no config file needed):
@@ -43,7 +43,9 @@ elisity auth test
 **Location:** `~/.elisity/config.yaml`
 
 The file is created automatically on the first `elisity config set-profile` call.
-The `~/.elisity/` directory is created if it does not exist.
+The `~/.elisity/` directory is created if it does not exist. On Linux and macOS every
+write leaves the directory at `700` and the file at `600`; see
+[Secret Storage](#secret-storage).
 
 ### Structure
 
@@ -92,10 +94,22 @@ active_profile: prod
 elisity config set-profile NAME \
   --base-url URL \
   --client-id ID \
-  --client-secret SECRET \
   [--timeout 30] \
   [--default-format json]
 ```
+
+The client secret comes from the first of these that is available:
+
+1. The `--client-secret` option. Avoid it: the secret stays in your shell history and
+   shows in the process list while the command runs.
+2. The `CCC_CLIENT_SECRET` environment variable. The CLI prints
+   `Using the client secret from CCC_CLIENT_SECRET.`, so a secret exported for another
+   tenant does not end up in this profile unnoticed.
+3. A `Client secret:` prompt that does not echo what you type. An empty answer is
+   rejected.
+
+With no terminal to prompt on, for example in a script without `CCC_CLIENT_SECRET`,
+the command fails and saves nothing.
 
 If no `active_profile` is set yet, the first profile created becomes the active profile
 automatically.
@@ -430,27 +444,25 @@ with a non-zero status code. The raw API response is not printed.
 
 ### Profile per Environment
 
-Create a profile for each CCC instance:
+Create a profile for each CCC instance. Each command asks for that instance's client
+secret:
 
 ```bash
 # Production
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
-  --client-id YOUR_PROD_CLIENT_ID \
-  --client-secret YOUR_PROD_CLIENT_SECRET
+  --client-id YOUR_PROD_CLIENT_ID
 
 # Staging
 elisity config set-profile staging \
   --base-url https://staging-ccc.example.com \
   --client-id YOUR_STAGING_CLIENT_ID \
-  --client-secret YOUR_STAGING_CLIENT_SECRET \
   --timeout 60
 
 # Lab (self-signed certs)
 elisity config set-profile lab \
   --base-url https://lab-ccc.example.com \
-  --client-id YOUR_LAB_CLIENT_ID \
-  --client-secret YOUR_LAB_CLIENT_SECRET
+  --client-id YOUR_LAB_CLIENT_ID
 ```
 
 Switch between environments:
@@ -527,12 +539,15 @@ elisity -p prod -q 'length(@)' topology get-all-sites-v2
 
 ### Secret Storage
 
-- **`~/.elisity/config.yaml` contains client secrets in plain text.** Set restrictive
-  file permissions:
+- **`~/.elisity/config.yaml` contains client secrets in plain text.** On Linux and
+  macOS the CLI sets the `~/.elisity` directory to `700` and the file to `600`,
+  readable by your user only, every time it writes them. Files an earlier release
+  created with wider permissions are tightened on the next `config set-profile` or
+  `config use-profile`.
 
-  ```bash
-  chmod 600 ~/.elisity/config.yaml
-  ```
+- Leave `--client-secret` out of `config set-profile` and let the CLI prompt for the
+  secret. A secret on the command line stays in your shell history and shows in the
+  process list while the command runs.
 
 - For CI/CD, use environment variables backed by your platform's secrets manager
   (GitHub Secrets, Vault, AWS Secrets Manager). Do not store secrets in pipeline
@@ -575,8 +590,7 @@ Fix:
 ```bash
 elisity config set-profile default \
   --base-url https://ccc.example.com \
-  --client-id YOUR_CLIENT_ID \
-  --client-secret YOUR_CLIENT_SECRET
+  --client-id YOUR_CLIENT_ID
 ```
 
 Or export the environment variable:
@@ -628,7 +642,6 @@ export CCC_TIMEOUT=120
 elisity config set-profile prod \
   --base-url https://prod-ccc.example.com \
   --client-id YOUR_CLIENT_ID \
-  --client-secret YOUR_CLIENT_SECRET \
   --timeout 120
 ```
 

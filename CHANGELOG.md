@@ -6,6 +6,139 @@ the commands for CCC 26.9, and a CLI fix for it would ship as `26.9.1`. Read the
 the release you upgrade to before you upgrade. A renamed or removed command, or a changed
 flag, breaks the scripts that call it.
 
+## 26.10.0 (CCC 26.10)
+
+The commands for CCC 26.10.
+
+### Entra ID instances replace the single Entra configuration (breaking)
+
+CCC 26.10 connects more than one Entra ID instance, each with its own ID. The commands that
+read, changed, deleted and synced the one tenant-wide Entra configuration are removed; use
+the instance commands instead:
+
+| Removed | Use instead |
+|---|---|
+| `ad get-auth` | `ad list-entra-instances`, `ad get-entra-instance <id>` |
+| `ad update-auth` | `ad create-entra-instance`, `ad update-entra-instance <id> --confirm` |
+| `ad delete-auth` | `ad delete-entra-instance <id> --confirm` |
+| `ad sync` | `ad sync-entra-instance <id>` |
+
+`ad create-entra-instance` and `ad update-entra-instance` take the same JSON body
+`ad update-auth` took. Unlike `ad update-auth`, `ad update-entra-instance` runs only with
+`--confirm`, because a new `tenantId` on an instance deletes its data.
+`ad get-entra-instance-statuses` reports the status of every instance.
+
+### `policy get-policies-for-policy-set` (breaking)
+
+`elisity policy get-policies-for-policy-set` is the new name of
+`get-all-policies-for-policy-set-as-nd-json`. Its arguments are unchanged (the policy set
+ID, `--filters`, `--pageable`), but it now returns one page as a JSON object, with the
+policies in `content` and the page details beside them, instead of a list of policies. A
+`-q` query written for the list needs `content` in front, for example
+`-q 'content[].name'`.
+
+### `--filters`, `--pageable`, `--sortCriteria` and `--searchCriteria` work
+
+These options take a JSON object, and the CLI now sends each of its fields as its own query
+parameter: `--pageable '{"page": 1, "size": 50}'` sends `page=1&size=50`. A list repeats
+the parameter, so `--filters '{"idFilter": ["a", "b"]}'` sends `idFilter=a&idFilter=b`.
+Before, the CLI sent the whole object as one parameter, which CCC ignores, so these
+commands returned the first page, unfiltered, whatever the option said, and exited 0.
+
+A value that is not a JSON object, or a field that holds an object, now fails with exit
+code 2 and sends nothing. `--help` lists the fields each option takes. The options are
+still required: pass `'{}'` for no filter or for CCC's default page.
+
+The fixed commands:
+
+- `devices search-suppression-list`
+- `policy list`, `bulk-impact`, `impact`, `get-policy-groups-by-ids`,
+  `get-policies-for-policy-set`, `search-templates`, `search-templates-v2`,
+  `lookup-network`, `lookup-dynamic`, `lookup-dynamic-totals`, `get-policy-groups-json`,
+  `get-policy-group-workloads`, `get-policy-group-devices`,
+  `get-matching-criteria-dynamic-values`, `get-policies-for-security-profile`,
+  `get-history-entries`, `get-policy-group-labels`, `get-access-policies-for-profile`
+
+### `devices update-device` body
+
+The JSON body takes `ip`, `venId`, `attributes` and `auditComment`; `mac` is not part of
+it. The command still sends a `PATCH`, and an omitted, `null` or empty `ip` / `venId`
+still keeps the current value.
+
+### Other changes
+
+- Every request the CLI sends, the token request included, carries
+  `User-Agent: Elisity/elisity-cli`. It sent `python-requests/<version>`.
+- The wheel requires `urllib3>=2.8.0`, `certifi>=2026.10.18`, `idna>=3.15` and
+  `pygments>=2.20.0`, so installing it into an existing environment upgrades older
+  versions that have known advisories. pip kept them before. An environment that has to
+  stay on urllib3 1.x can no longer install the CLI.
+- `elisity config set-profile` no longer needs `--client-secret`. Without it the CLI
+  reads `CCC_CLIENT_SECRET`, and when that is not set, asks for the secret without
+  echoing it. With no terminal to ask on, the command fails and saves nothing.
+  `--client-secret` still works, but a secret on the command line stays in your shell
+  history.
+- `elisity reporting get-aggregate-enforcement-score` works on CCC 26.10, which removed
+  the score it read. It now reads the tenant-wide policy device coverage and still prints
+  `[{"value": ..., "dateTime": ...}]`, without the `__typename` key. A snapshot with no
+  data gives no row.
+- On Linux and macOS the CLI keeps `~/.elisity` at `700` and `~/.elisity/config.yaml` at
+  `600`, readable by your user only, and tightens a folder or file an earlier release
+  left wider the next time it writes them. You no longer need to `chmod` it yourself.
+
+### Removed commands (breaking)
+
+A script that calls one of these commands fails with `No such command`.
+
+- **`ad`** — `ad delete-auth`, `ad get-auth`, `ad sync`, `ad update-auth`: see
+  [Entra ID instances](#entra-id-instances-replace-the-single-entra-configuration-breaking).
+- **`devices`** — `refresh-devices-view`. CCC 26.10 has no replacement.
+- **`policy`** — `get-all-policies-as-nd-json`. List the policies of each policy set with
+  `policy get-policies-for-policy-set <policySetId>` or
+  `policy search-policies-for-policy-set <policySetId>`; `policy get-all-as-nd-json` lists
+  the policy sets.
+
+### Changed request bodies
+
+These commands take a different request body. Their flags are unchanged — the body is passed as JSON via `--body` / `--body-file` — but the JSON you send must match the new schema.
+
+- **`devices`** — `create-configuration` and `update-configuration` (`startDateTime` is now required), `update-device`
+- **`flows`** — `flows-export`, `get-dash-board-summary-data`, `get-pg-data`, `get-traffic-record`, `traffic-record-export`
+- **`policy`** — `lookup-dynamic`, `lookup-dynamic-export`, `lookup-dynamic-totals`
+- **`topology`** — `create-global-credentials`, `create-ven`, `get-dashboard-metrics`, `update-global-credentials`, `update-ports-configuration`, `update-ven`
+
+Other commands changed only in what they return; how you call them is unchanged.
+
+### Added commands
+
+New commands, grouped by CLI group.
+
+#### `ad`
+
+- `create-entra-instance` — Create a new Entra instance
+- `delete-entra-instance` — Delete a specific Entra instance and all its data
+- `get-entra-instance` — Get one Entra instance
+- `get-entra-instance-statuses` — Per-instance Entra status
+- `list-entra-instances` — List all Entra instances
+- `sync-entra-instance` — Register an Entra sync for an instance
+- `update-entra-instance` — Update an existing Entra instance
+
+#### `devices`
+
+- `bulk-update-workloads` — Bulk update workload STATIC attributes
+
+#### `policy`
+
+- `export-policy-sets` — Generate a Policy Sets CSV export (parents followed by their replicas)
+- `get-distribution-zone-capacity-thresholds` — Get the configured Distribution Zone capacity alert thresholds (percent of limit)
+- `search-policy-sets` — Search, filter and page Policy Sets; replicas are nested under their parent
+- `search-templates-v2` — Search and filter Policy Group Templates, policy groups as id and name
+
+#### `topology`
+
+- `check-candidate-credentials` — Test a candidate credential before the VEN exists
+- `check-ven-credentials` — Test a VEN's credentials against its vendor
+
 ## 26.9.0 (CCC 26.9)
 
 ### `devices update-device` sends PATCH

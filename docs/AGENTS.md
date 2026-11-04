@@ -55,7 +55,7 @@ or read [glossary.md](glossary.md).
 | "Zero Trust score" / "posture score" / "compliance score" | Policy Enforcement Score | `elisity reporting get-aggregate-enforcement-score` |
 | "Zero Trust score for site X" | Policy Enforcement Score | `elisity reporting get-site-kpis --site <SITE>` (CCC 26.7 removed the per-policy-set score) |
 | "per-PG Zero Trust breakdown" | Policy Enforcement Score | `elisity reporting get-zero-trust-metrics` |
-| "why is the score low" / "what should I fix to improve the score" | Policy Enforcement Score | `elisity reporting get-zero-trust-metrics` then `elisity policy get-all-policies-as-nd-json` — see [Diagnosing a low/zero Zero Trust score](#diagnosing-a-lowzero-zero-trust-score-do-not-guess-the-cause) |
+| "why is the score low" / "what should I fix to improve the score" | Policy Enforcement Score | `elisity reporting get-zero-trust-metrics` then `elisity policy search-policies-for-policy-set` — see [Diagnosing a low/zero Zero Trust score](#diagnosing-a-lowzero-zero-trust-score-do-not-guess-the-cause) |
 | "list our VENs" / "list switches" | Virtual Edge Node | `elisity topology get-virtual-edge-nodes` |
 | "VEN inventory by model" | Virtual Edge Node | `elisity reporting get-virtual-edge-nodes-count` |
 | "list Virtual Edges" | Virtual Edge | `elisity reporting get-virtual-edges-count` |
@@ -83,7 +83,7 @@ read-only, all data-local (no API call needed).
 
 ### `elisity glossary list`
 
-Returns the 28 canonical terms with their domain and (where applicable) enum
+Returns the 29 canonical terms with their domain and (where applicable) enum
 value. Use this to confirm a domain mapping when you're unsure which API group
 backs a UI feature.
 
@@ -156,7 +156,7 @@ When a human asks for something using a phrase you don't immediately recognise:
    Do not act on a guess for non-trivial operations.
 
 4. **Never paraphrase a UI feature into a plausible-but-fake CLI command.**
-   The CLI has 517 commands; if a verb you imagine isn't in `--help`, it
+   The CLI has 525 commands; if a verb you imagine isn't in `--help`, it
    doesn't exist. The honesty rule is non-negotiable — fabricated commands
    waste human review cycles and damage trust.
 
@@ -182,7 +182,7 @@ whose policies are *already active*, is a fabricated remediation — it names a
 fix that does nothing. That violates the honesty rule.
 
 **Do not infer the cause from the score. Read the group's actual policy status.**
-That is two calls:
+That is two steps:
 
 ```bash
 # 1. The low scorers, with the policyGroupId you need for step 2.
@@ -192,29 +192,38 @@ elisity -f table \
 
 # 2. The policies that reference that group, and what mode they are in.
 #    This is the cause. Substitute the pgId from step 1.
-elisity -f table \
-  -q '[?srcId==`PG_ID` || dstId==`PG_ID`].{name: name, mode: monitorMode, disabled: disabled}' \
-  policy get-all-policies-as-nd-json
+#    Policies live in policy sets: repeat per POLICY_SET_ID
+#    (elisity policy get-all-as-nd-json -q '[].id').
+#    CCC filters by group, once as source and once as destination.
+elisity -f json policy search-policies-for-policy-set <POLICY_SET_ID> \
+  --body '{"srcPolicyGroupIds":["PG_ID"],"size":250}' \
+  -q '{total: totalElements, last: last, policies: content[].{name: name, mode: monitorMode, status: status}}'
+elisity -f json policy search-policies-for-policy-set <POLICY_SET_ID> \
+  --body '{"dstPolicyGroupIds":["PG_ID"],"size":250}' \
+  -q '{total: totalElements, last: last, policies: content[].{name: name, mode: monitorMode, status: status}}'
+#    Each answer is one page. `total` counts every matching policy; while
+#    `last` is false, repeat the call with "page":1, 2, ... in the body.
 ```
 
-Read step 2 like this — the mapping is mechanical, so do not editorialise:
+Read step 2 like this — the mapping is mechanical, so do not editorialise.
+Classify only after both calls, every page and every policy set:
 
 | What step 2 returns | Cause | What to propose |
 |---|---|---|
-| no rows | **no policy** | create a policy, check `insights get-policy-suggestion-list`, or reclassify the devices. Do **not** propose activation — there is nothing to activate |
-| all rows `MONITOR_ONLY` | **simulation only** | review the simulated traffic, then activate the policies with `policy update-policy` |
-| all rows `MONITOR_EXTERNAL` | **independent control** | enforcement is delegated to another system; low coverage is by design. Confirm before changing |
-| any row `MONITOR_AND_ENFORCE` | **active but uncovered** | policies are already active — activating anything else will not move the score. Reclassify catch-all devices / add rules for the uncovered flows |
+| `total` 0 in every call | **no policy** | create a policy, check `insights get-policy-suggestion-list`, or reclassify the devices. Do **not** propose activation — there is nothing to activate |
+| all policies `MONITOR_ONLY` | **simulation only** | review the simulated traffic, then activate the policies with `policy update-policy` |
+| all policies `MONITOR_EXTERNAL` | **independent control** | enforcement is delegated to another system; low coverage is by design. Confirm before changing |
+| any policy `MONITOR_AND_ENFORCE` | **active but uncovered** | policies are already active — activating anything else will not move the score. Reclassify catch-all devices / add rules for the uncovered flows |
 
 Only when step 2 shows `MONITOR_ONLY` policies should you propose activating
 them. `policy update-policy <POLICY_SET_ID> <POLICY_ID>` takes the policy as
 JSON: read its current fields first
-(`policy get-all-policies-for-policy-set-as-nd-json <POLICY_SET_ID>`), change
+(`policy get-policy-by-id <POLICY_ID>`), change
 only `monitorMode` to `MONITOR_AND_ENFORCE`, and send the rest back unchanged.
 Activation changes enforcement on a live tenant, so it still needs explicit
 human approval (see [Destructive operations](#destructive-operations)).
 
-> **Removed in CCC 26.7: `reporting diagnose-low-score`.** Use the two calls
+> **Removed in CCC 26.7: `reporting diagnose-low-score`.** Use the two steps
 > above instead; they do the same diagnosis.
 
 ---
@@ -261,11 +270,12 @@ command name:
   (`topology decommission-virtual-edge-node`) and the Insights reset/recreate
   commands, whose `--help` describes each as "Delete and Create all …
   suggestions".
-- One command whose path names no action but which resets state:
-  `ad set-groups-default-enabled` (CCC 26.9). CCC describes it as a reset of
-  the "enable all groups by default" setting.
+- Two commands whose paths name no action but which reset or delete state:
+  `ad set-groups-default-enabled` (CCC 26.9), which CCC describes as a reset of
+  the "enable all groups by default" setting, and `ad update-entra-instance`
+  (CCC 26.10), because a new `tenantId` on an instance deletes its data.
 
-That makes 47 destructive commands, and every one of them requires `--confirm`.
+That makes 48 destructive commands, and every one of them requires `--confirm`.
 
 **Do not read `--confirm` as the whole safety story.** State-changing is
 broader than destructive: `create-*`, `update-*`, `change-active-ve`,
@@ -439,11 +449,16 @@ elisity -f table \
 
 # 5. The cause, per low-scoring group. Don't infer "simulation" from a low
 #    score — read the monitorMode of the policies that reference the group.
-elisity -f table \
-  -q '[?srcId==`PG_ID` || dstId==`PG_ID`].{name: name, mode: monitorMode, disabled: disabled}' \
-  policy get-all-policies-as-nd-json
-#   → no rows = no policy; all MONITOR_ONLY = simulation; any MONITOR_AND_ENFORCE
-#     = active but uncovered. See "Diagnosing a low/zero Zero Trust score".
+#    Policies live in policy sets: repeat per POLICY_SET_ID
+#    (elisity policy get-all-as-nd-json -q '[].id'), and run it once with
+#    srcPolicyGroupIds and once with dstPolicyGroupIds.
+elisity -f json policy search-policies-for-policy-set <POLICY_SET_ID> \
+  --body '{"srcPolicyGroupIds":["PG_ID"],"size":250}' \
+  -q '{total: totalElements, last: last, policies: content[].{name: name, mode: monitorMode, status: status}}'
+#   → page while `last` is false ("page":1, 2, ...). Over every call and page:
+#     `total` 0 = no policy; all MONITOR_ONLY = simulation; any
+#     MONITOR_AND_ENFORCE = active but uncovered. See "Diagnosing a low/zero
+#     Zero Trust score".
 ```
 
 ### Example 2 — "List our switches in visibility-only mode at the Boston site."
